@@ -1,0 +1,94 @@
+= Trantor - Let us develop an OS
+:doctype: book
+:numbered:
+:toc: left 
+:imagesdir: ./images
+:iconsdir: ./icons
+:stylesdir: ./css
+:scriptsdir: ./js
+:source-highlighter: highlightjs
+:author: Raghu Kaippully
+:email: rkaippully@gmail.com
+:revnumber: 1.0
+
+Trantor - A beginner's guide to developing an operating system.
+
+== Introduction
+
+=== About this guide
+
+Welcome to the Trantor guide. This is a tutorial to teach you how to develop an operating
+system. Before we begin, let me explain a few things about this guide.
+
+Creating an operating system is a long and hard process. It is not for the fainthearted.
+At the same time, it will teach you a lot of things and is very rewarding. Developing an
+OS is one of the most challenging tasks you will ever encounter. The purpose of this guide
+is to teach you the important steps in that process.
+
+Having said that, it is important to understand that this is a tutorial. I am not focusing
+on doing things the most efficient way. The focus is on simplicity of the design and ease
+of understanding. So the OS we develop may not be the most efficient or may not support
+all the different hardware out there.
+
+This guide is intended to be read section by section. Each section builds upon ideas and
+code developed in previous sections.
+
+=== Trantor Operating System
+
+The OS we are developing is named Trantor. It will run on an
+http://en.wikipedia.org/wiki/IBM_PC_compatible[IBM PC compatible system] with
+a http://en.wikipedia.org/wiki/Pentium[Pentium] compatible CPU. The system will run with
+4MB RAM. It will support a minimal set of hardware - a keyboard, a VGA card to support
+text mode console, and an ATA hard drive.
+
+We'll be developing a 32-bit, protected mode, multitasking operating system that supports
+virtual memory via paging. Don't worry if you don't know what these are, we'll learn all
+these as we go through this guide.
+
+=== What you should already know
+
+So, what are the things you must know before you embark on this long journey? Well, there
+are a number of things you should be very familiar with. Let us go over them.
+
+Firstly, you should be comfortable using a Linux operating system. You should be very
+comfortable working from the command line. You are not prepared if you don't know what
+`ls`, `make`, `dd`, `man`, or `info` is; you should spend more time using a Linux OS
+before you proceed. We will be developing our OS on a Linux platform, so it is essential
+to be familiar with the development environment.
+
+Secondly, you should know basics about OS theory. You should know the difference between
+an operating system, a kernel, standard library, compiler, assembler, linker, user space
+programs etc. We will touch upon some of these topics in this guide but not in detail.
+
+Thirdly, you should be comfortable using GNU C compiler and binutils package. You must
+have some experience using these tools to build a few non-trivial programs. We will
+develop our OS in the C and assembly languages. Some experience in systems programming
+will help you but it is not mandatory.
+
+Fourthly, we will be using `git` as our source control system. It is expected that you
+know a bit about it and can find your way around.
+
+And lastly, you should not be scared of exploring, experimenting and figuring things out
+when something goes wrong. Operating system is the piece of software closest to hardware.
+In many cases, the system will just crash when something goes wrong and it is not easy to
+find out what happened, you should have good troubleshooting skills for this.
+
+=== Development environment
+
+As I mentioned above, we'll be developing Trantor on a Linux system. I developed it on a
+machine running https://www.debian.org/CD/live/[Debian Live 7.7.0 LXDE 64 bit]. But you
+can choose your favorite distro. You should also be able to use a 32-bit distro instead of
+64-bit.
+
+You can use your favorite text editor for coding. Most of our code will be written in C
+and assembly.
+
+Finally, we will use http://qemu.org[qemu] for testing our operating system. You must not
+test your OS on real hardware unless you are completely convinced that it is bug free and
+will not damage anything. In this guide, our aim is not to develop a *bug free* OS. So it
+is safer to use an emulator instead. We also will use a qemu feature to load the kernel
+directly instead of using a boot loader, so that is an additional reason to use qemu.
+
+== Preparing your environment
+
+// vim: set ai expandtab ts=4 tw=90:
