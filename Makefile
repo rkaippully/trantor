@@ -18,5 +18,13 @@
 # Makefile for Trantor documentation
 #
 
-all: trantor.asciidoc
-	asciidoctor -b html5 -o index.html trantor.asciidoc
+html: trantor.asciidoc
+	a2x -f chunked trantor.asciidoc
+	mv trantor.chunked/* .
+	rmdir trantor.chunked
+
+pdf: trantor.asciidoc
+	a2x -f pdf trantor.asciidoc
+
+clean:
+	$(RM) *.html docbook-xsl.css trantor.pdf

@@ -2,23 +2,18 @@
 :doctype: book
 :numbered:
 :toc: left 
-:imagesdir: ./images
-:iconsdir: ./icons
-:stylesdir: ./css
-:scriptsdir: ./js
 :source-highlighter: highlightjs
 :author: Raghu Kaippully
 :email: rkaippully@gmail.com
 :revnumber: 1.0
 
-Trantor - A beginner's guide to developing an operating system.
-
 == Introduction
 
-=== About this guide
-
 Welcome to the Trantor guide. This is a tutorial to teach you how to develop an operating
-system. Before we begin, let me explain a few things about this guide.
+system.
+
+
+=== About this guide
 
 Creating an operating system is a long and hard process. It is not for the fainthearted.
 At the same time, it will teach you a lot of things and is very rewarding. Developing an
@@ -27,7 +22,7 @@ is to teach you the important steps in that process.
 
 Having said that, it is important to understand that this is a tutorial. I am not focusing
 on doing things the most efficient way. The focus is on simplicity of the design and ease
-of understanding. So the OS we develop may not be the most efficient or may not support
+of understanding. So the OS we develop may not be the most efficient and will not support
 all the different hardware out there.
 
 This guide is intended to be read section by section. Each section builds upon ideas and
@@ -37,13 +32,16 @@ code developed in previous sections.
 
 The OS we are developing is named Trantor. It will run on an
 http://en.wikipedia.org/wiki/IBM_PC_compatible[IBM PC compatible system] with
-a http://en.wikipedia.org/wiki/Pentium[Pentium] compatible CPU. The system will run with
+a http://en.wikipedia.org/wiki/Intel_80486[Intel486] compatible CPU. The system will run with
 4MB RAM. It will support a minimal set of hardware - a keyboard, a VGA card to support
 text mode console, and an ATA hard drive.
 
 We'll be developing a 32-bit, protected mode, multitasking operating system that supports
 virtual memory via paging. Don't worry if you don't know what these are, we'll learn all
 these as we go through this guide.
+
+Trantor is a unix like operating system. This will make it easy to port a a few user space
+programs after we develop the OS kernel.
 
 === What you should already know
 
@@ -61,9 +59,9 @@ an operating system, a kernel, standard library, compiler, assembler, linker, us
 programs etc. We will touch upon some of these topics in this guide but not in detail.
 
 Thirdly, you should be comfortable using GNU C compiler and binutils package. You must
-have some experience using these tools to build a few non-trivial programs. We will
-develop our OS in the C and assembly languages. Some experience in systems programming
-will help you but it is not mandatory.
+have good experience using these tools to build a few non-trivial programs. We will
+develop our OS using C and assembly languages. Some experience in systems programming
+will help you a lot but it is not mandatory.
 
 Fourthly, we will be using `git` as our source control system. It is expected that you
 know a bit about it and can find your way around.
@@ -89,6 +87,40 @@ will not damage anything. In this guide, our aim is not to develop a *bug free* 
 is safer to use an emulator instead. We also will use a qemu feature to load the kernel
 directly instead of using a boot loader, so that is an additional reason to use qemu.
 
-== Preparing your environment
+== Operating System Architecture
+
+Trantor operating system contains the following components:
+
+1. The operating system kernel
+1. Runtime library
+1. Compiler
+1. User space programs
+
+This chapter will explain each of these components in detail.
+
+=== Operating system kernel
+
+The kernel is the lowest level component of the operating system that mediates between
+software and hardware. Trantor kernel manages the CPU, memory, various I/O devices, and
+processes executed in the OS. Programs running in Trantor uses system calls to communicate
+with the kernel.
+
+Trantor will run on processors supporting the IA-32 architecture. We need at least an
+Intel486 CPU or higher. We'll be making use of some instructions not available in earlier
+CPUs. The CPU
+
+=== Runtime library
+
+TODO
+
+=== Compiler
+
+TODO
+
+=== User space programs
+
+TODO
+
+
 
 // vim: set ai expandtab ts=4 tw=90:
