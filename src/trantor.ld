@@ -31,15 +31,10 @@ ENTRY(_start)
 SECTIONS {
 
     /* The image is loaded at 1 MB in RAM */
-    .multiboot : AT(0x00100000)
-    {
+    .text : AT(0x00100000) {
         /* Put the multiboot section at the begining so that it is within the first 8KB */
         *(.multiboot)
-        _multiboot_end_ = ALIGN(4);
-    }
 
-    /* The text (code) section follows multiboot section */
-    .text ADDR(.multiboot) + SIZEOF(.multiboot) : {
         *(.text)
         *(.text.*)
     }
@@ -55,7 +50,17 @@ SECTIONS {
     .bss ADDR(.data) + SIZEOF(.data) : {
         *(.bss)
         *(COMMON)
-        __bss_end__ = ALIGN(4);
+    
+        /* Physical memory bitmap is stored at the end of kernel */
+        *(.membitmap)
+
+        kernel_end = ALIGN(4096);
+    }
+    
+    /* Stuff we don't want in the kernel */
+    /DISCARD/ : {
+        *(.eh_frame)
+        *(.comment)
     }
 } 
 

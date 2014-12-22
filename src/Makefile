@@ -22,33 +22,42 @@
 AS := gcc
 
 # Command line flags for assembler
-ASFLAGS := -O3 -Wall -m32 -march=i586
+ASFLAGS := -O3 -Wall -m32 -march=i486
+
+# Always use gcc as the compiler
+CC := gcc
+
+# Command line flags for the compiler
+CFLAGS := -O3 -Wall -m32 -march=i486 -std=c99
 
 # Always use ld for linking
 LD := ld
 
 # Command line flags for the linker
-LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static --strip-all -m elf_i386 -T trantor.ld
+LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T trantor.ld -Ttext=0xf0000000
 
 # How to compile assembly source code
 %.o: %.S
 	$(AS) $(ASFLAGS) -c -o $*.o $*.S
 
+# How to compile C source code
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $*.o $*.c
 
 # The kernel is compiled to this file
-IMAGE=trantor.img
+IMAGE=trantor
 
 # Kernel is composed of these object files
-OBJECTS := boot.o
+OBJECTS := boot.o main.o mm.o console.o
 
 
 # The default Make target will compile the kernel
 $(IMAGE): $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -Map=$(IMAGE).map -o $@ $^
 
 # Emulate the operaing system with qemu
 emulate: $(IMAGE)
-	qemu-system-i386 -cpu pentium -m 4 -kernel $(IMAGE)
+	qemu-system-i386 -cpu 486 -m 4 -kernel $(IMAGE) -monitor stdio -no-shutdown
 
 clean:
-	$(RM) $(IMAGE) $(OBJECTS)
+	$(RM) $(IMAGE) $(IMAGE).map $(OBJECTS)
