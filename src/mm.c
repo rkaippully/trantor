@@ -263,11 +263,16 @@ static inline void invlpg(const void* const addr)
     __asm__ volatile("invlpg %0" :: "m"(*(uint8_t*)addr));
 }
 
+/* A mutex used in allocation and deallocation */
+static mutex_t vmm_mutex;
+
 /*
     Allocate a physical page at virtual address addr
 */
 void alloc_virt_page(const void* addr)
 {
+    acquire_mutex(&vmm_mutex);
+
     int pdir_idx = (uint32_t)addr >> 22;
     /* Allocate a page table if needed */
     if (!page_dir[pdir_idx].fields.present) {
@@ -279,6 +284,8 @@ void alloc_virt_page(const void* addr)
 
     /* invalidate TLB */
     invlpg(addr);
+
+    release_mutex(&vmm_mutex);
 }
 
 /*
@@ -286,12 +293,16 @@ void alloc_virt_page(const void* addr)
 */
 void free_virt_page(const void* addr)
 {
+    acquire_mutex(&vmm_mutex);
+
     paging_t* tbl = &page_tables[(uint32_t)addr >> 12];
     free_phys_page(tbl->word & 0xfffff000);
     tbl->word = 0;
 
     /* invalidate TLB */
     invlpg(addr);
+
+    release_mutex(&vmm_mutex);
 }
 
 /*
