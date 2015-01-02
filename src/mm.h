@@ -18,8 +18,9 @@
 #ifndef _MM_H
 #define _MM_H
 
-extern void mm_init();
+#include "ints.h"
 
+extern void memory_map(uint32_t phys_addr, const void* virt_addr, int num_pages);
 extern void alloc_virt_page(const void* addr);
 extern void free_virt_page(const void* addr);
 

@@ -15,10 +15,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _CONSOLE_H
-#define _CONSOLE_H
+#ifndef _ASM_H
+#define _ASM_H
 
-extern void console_init();
+#include "ints.h"
+
+static inline uint8_t in_byte(uint16_t port)
+{
+    uint8_t val;
+    __asm__ volatile("inb %1, %0" : "=a"(val) : "d"(port));
+    return val;
+}
+
+static inline void out_byte(uint16_t port, uint8_t val)
+{
+    __asm__ volatile("outb %1, %0" :: "d"(port), "a"(val));
+}
 
 #endif
 

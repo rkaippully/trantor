@@ -15,13 +15,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "mm.h"
-#include "console.h"
+extern void mm_init();
+extern void pic_init();
+extern void interrupts_init();
 
 static void init()
 {
     mm_init();
-    console_init();
+    pic_init();
+    interrupts_init();
 }
 
 void kernel_main()

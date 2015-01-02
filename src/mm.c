@@ -33,9 +33,8 @@
 /*
     Virtual Memory Layout
 
-    0x00000000 - 0xefffffff - kernel (most of this will not be used)
-    0xf0000000 - 0xffbdffff - kernel (most of this will not be used)
-    0xffbe0000 - 0xffbfffff - VGA memory
+    0x00000000 - 0xefffffff - user space (most of this will not be used)
+    0xf0000000 - 0xffbfffff - kernel (most of this will not be used)
     0xffc00000 - 0xffffffff - page tables and directory
 */
 
@@ -245,14 +244,13 @@ static paging_t* const page_tables = (paging_t*)0xffc00000;
 /*
     Allocate a new physical page in the specified paging entry
 */
-static inline void new_paging_entry(paging_t* entry, bool is_kernel)
+static inline void new_paging_entry(paging_t* entry, uint32_t phys_addr, bool is_kernel)
 {
-    uint32_t addr = alloc_phys_page();
     /* TODO: handle out of memory */
     entry->fields.present = 1;
     entry->fields.writable = 1;
     entry->fields.user_mode = !is_kernel;
-    entry->fields.addr = addr >> 12;
+    entry->fields.addr = phys_addr >> 12;
 }
 
 /*
@@ -267,25 +265,45 @@ static inline void invlpg(const void* const addr)
 static mutex_t vmm_mutex;
 
 /*
+    Memory mapping
+
+    This function is used by device drivers to map physical memory to a virtual address.
+    The addresses must be 4KB page aligned. 'num_pages' is the number of pages that need
+    to be mapped.
+*/
+void memory_map(uint32_t phys_addr, const void* virt_addr, int num_pages)
+{
+    acquire_mutex(&vmm_mutex);
+
+    for (int i = 0; i < num_pages; i++) {
+        int pdir_idx = (uint32_t)virt_addr >> 22;
+        /* Allocate a page table if needed */
+        if (!page_dir[pdir_idx].fields.present) {
+            uint32_t ptbl_addr = alloc_phys_page();
+            new_paging_entry(&page_dir[pdir_idx], ptbl_addr, virt_addr >= KERNEL_START);
+        }
+
+        int ptbl_idx = (uint32_t)virt_addr >> 12;
+        new_paging_entry(&page_tables[ptbl_idx], phys_addr, virt_addr >= KERNEL_START);
+
+        /* invalidate TLB */
+        invlpg(virt_addr);
+
+        phys_addr += PAGE_SIZE;
+        virt_addr += PAGE_SIZE;
+    }
+
+    release_mutex(&vmm_mutex);
+}
+
+/*
     Allocate a physical page at virtual address addr
 */
 void alloc_virt_page(const void* addr)
 {
-    acquire_mutex(&vmm_mutex);
-
-    int pdir_idx = (uint32_t)addr >> 22;
-    /* Allocate a page table if needed */
-    if (!page_dir[pdir_idx].fields.present) {
-        new_paging_entry(&page_dir[pdir_idx], addr >= KERNEL_START);
-    }
-
-    int ptbl_idx = (uint32_t)addr >> 12;
-    new_paging_entry(&page_tables[ptbl_idx], addr >= KERNEL_START);
-
-    /* invalidate TLB */
-    invlpg(addr);
-
-    release_mutex(&vmm_mutex);
+    // Map a new page to addr
+    // TODO: handle out of memory
+    memory_map(alloc_phys_page(), addr, 1);
 }
 
 /*

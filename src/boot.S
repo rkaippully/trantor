@@ -187,12 +187,24 @@ halt:
     movl    $physical_addr_of(kernel_page_dir), %edi
     /* copy the paging entry to the correct position in the directory */
     movl    %eax, (%edi)
+    
+    movl    $KERNEL_SIZE, %ecx
+    /* ecx holds the count of kernel pages */
+    shrl    $12, %ecx
     /* eax holds the identity page table entry for the kernel */
     setup_paging_entry $KERNEL_PHYS_START, %eax
-    /* edi points to the page table */
-    movl    $physical_addr_of(kernel_stack_start), %edi
-    /* copy the paging entry to the correct position in the directory */
-    movl    %eax, ((KERNEL_PHYS_START >> 12) * 4)(%edi)
+    /* edi points to the 1MB entry in the page table */
+    movl    $physical_addr_of(kernel_stack_start) + ((KERNEL_PHYS_START >> 12) * 4), %edi
+    /* clear DF so that edi will get incremented after each stosl */
+    cld
+1:
+    /* copy the paging entry to the correct position in the page table */
+    stosl   %eax, (%edi)
+    /* change eax to point to next page */
+    addl    $4096, %eax
+    decl    %ecx
+    /* repeat for all pages */
+    jnz     1b
 
 
     /*

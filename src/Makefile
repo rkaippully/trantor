@@ -19,22 +19,23 @@
 #
 
 # Always use gcc as assembler
-AS := gcc
+AS := i586-elf-gcc
 
 # Command line flags for assembler
-ASFLAGS := -O3 -Wall -m32 -march=i486
+ASFLAGS := -O3 -Wall -march=i586
 
 # Always use gcc as the compiler
-CC := gcc
+CC := i586-elf-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -m32 -march=i486 -std=c99
+CFLAGS := -O3 -Wall -march=i586 -std=c99 -ffreestanding 
 
 # Always use ld for linking
-LD := ld
+LD := i586-elf-ld
 
 # Command line flags for the linker
-LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T trantor.ld -Ttext=0xf0000000
+LIBDIR := $(dir $(shell which i586-elf-gcc))/../lib/gcc/i586-elf/$(shell i586-elf-gcc -dumpversion)
+LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T trantor.ld -Ttext=0xf0000000 -L$(LIBDIR) -lgcc
 
 # How to compile assembly source code
 %.o: %.S
@@ -48,7 +49,7 @@ LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T trantor
 IMAGE=trantor
 
 # Kernel is composed of these object files
-OBJECTS := boot.o main.o mm.o console.o
+OBJECTS := boot.o main.o mm.o pic.o isr.o interrupts.o
 
 
 # The default Make target will compile the kernel
@@ -57,7 +58,7 @@ $(IMAGE): $(OBJECTS)
 
 # Emulate the operaing system with qemu
 emulate: $(IMAGE)
-	qemu-system-i386 -cpu 486 -m 4 -kernel $(IMAGE) -monitor stdio -no-shutdown
+	qemu-system-i386 -cpu pentium -m 4 -kernel $(IMAGE) -monitor stdio -no-shutdown
 
 clean:
 	$(RM) $(IMAGE) $(IMAGE).map $(OBJECTS)
