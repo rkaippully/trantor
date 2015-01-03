@@ -107,16 +107,12 @@ void machine_check_isr()
     // TODO: Implement later
 }
 
-void master_irq_isr()
+/*
+    Invoked by PIC IRQs
+*/
+void irq_isr(int irq, regs_t regs)
 {
-    // TODO: Implement later
 }
-
-void slave_irq_isr()
-{
-    // TODO: Implement later
-}
-
 
 /*
     Structures for representing IDT

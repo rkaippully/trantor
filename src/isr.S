@@ -50,7 +50,7 @@
 .endm
 
 /* Another macro to create an ISR for IRQs */
-.macro setup_irq_isr vector, name, c_func_name
+.macro setup_irq_isr vector, name, c_func_name=irq_isr
     .global \name\()_isr_wrapper
     \name\()_isr_wrapper:
         /*
@@ -65,8 +65,8 @@
         movl    $1f, %ebx
         jmp     _save_regs
 1:
-        /* Interrupt vector number is also pushed */
-        pushl   $\vector
+        /* IRQ number is also pushed */
+        pushl   $(\vector - 0x80)
 
         /* Call the C ISR function */
         call    \c_func_name
@@ -85,8 +85,6 @@ _save_regs:
         pushl   %es
         pushl   %fs
         pushl   %gs
-        pushl   %ebp
-        movl    %esp, %ebp
         /* Switch to kernel data segment */
         movw    $KERNEL_DS, %ax
         movw    %ax, %ds
@@ -101,11 +99,8 @@ _save_regs:
 */
 _leave_irq_isr:
         movb    $0x20, %al
-        /*
-            The interrupt vector number is stored at (%esp), check if it is master/slave
-            IRQ
-        */
-        cmpl    $0x88, (%esp)
+        /* The IRQ number is stored at (%esp), check if it is master/slave IRQ */
+        cmpl    $8, (%esp)
         jl      1f
         /* Send EOI to slave PIC */
         outb    %al, $0xa0
@@ -118,8 +113,8 @@ _leave_irq_isr:
     Restore registers and return from ISR
 */
 _leave_isr:
-        /* Restore %ebp and %esp */
-        leave
+        /* Pop the interrupt vector/IRQ number from stack */
+        addl    $4, %esp
         /* Restore registers */
         popl    %gs
         popl    %fs
@@ -152,21 +147,21 @@ setup_isr 16, fpu_error
 setup_isr 17, alignment_check, 0
 setup_isr 18, machine_check
 
-setup_irq_isr 0x80, irq_0, master_irq_isr
-setup_irq_isr 0x81, irq_1, master_irq_isr
-setup_irq_isr 0x82, irq_2, master_irq_isr
-setup_irq_isr 0x83, irq_3, master_irq_isr
-setup_irq_isr 0x84, irq_4, master_irq_isr
-setup_irq_isr 0x85, irq_5, master_irq_isr
-setup_irq_isr 0x86, irq_6, master_irq_isr
-setup_irq_isr 0x87, irq_7, master_irq_isr
-setup_irq_isr 0x88, irq_8, slave_irq_isr
-setup_irq_isr 0x89, irq_9, slave_irq_isr
-setup_irq_isr 0x8a, irq_a, slave_irq_isr
-setup_irq_isr 0x8b, irq_b, slave_irq_isr
-setup_irq_isr 0x8c, irq_c, slave_irq_isr
-setup_irq_isr 0x8d, irq_d, slave_irq_isr
-setup_irq_isr 0x8e, irq_e, slave_irq_isr
-setup_irq_isr 0x8f, irq_f, slave_irq_isr
+setup_irq_isr 0x80, irq_0, timer_isr
+setup_irq_isr 0x81, irq_1
+setup_irq_isr 0x82, irq_2
+setup_irq_isr 0x83, irq_3
+setup_irq_isr 0x84, irq_4
+setup_irq_isr 0x85, irq_5
+setup_irq_isr 0x86, irq_6
+setup_irq_isr 0x87, irq_7
+setup_irq_isr 0x88, irq_8
+setup_irq_isr 0x89, irq_9
+setup_irq_isr 0x8a, irq_a
+setup_irq_isr 0x8b, irq_b
+setup_irq_isr 0x8c, irq_c
+setup_irq_isr 0x8d, irq_d
+setup_irq_isr 0x8e, irq_e
+setup_irq_isr 0x8f, irq_f
 
 /* vim: set expandtab ai nu ts=4 tw=90: */

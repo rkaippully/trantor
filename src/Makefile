@@ -49,7 +49,7 @@ LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T trantor
 IMAGE=trantor
 
 # Kernel is composed of these object files
-OBJECTS := boot.o main.o mm.o pic.o isr.o interrupts.o
+OBJECTS := boot.o main.o mm.o pic.o isr.o interrupts.o timer.o
 
 
 # The default Make target will compile the kernel
