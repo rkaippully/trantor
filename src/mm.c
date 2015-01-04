@@ -43,9 +43,6 @@ static const void* KERNEL_END;
 static const void* const KERNEL_PHYS_START = (void*)0x00100000;
 static const void* KERNEL_PHYS_END;
 
-/* Size of a memory page - physical and virtual */
-static const int PAGE_SIZE = 4096;
-
 /*
     Multiboot memory map
 */
@@ -332,9 +329,13 @@ static void vmm_init()
         We have already set up page directory and page tables in boot.S, but that covered
         even the unused parts of PMM bitmap. Let us free that here. 
     */
-    const void* addr = pmm_bitmap + pmm_bitmap_length;
+    void* addr = pmm_bitmap + pmm_bitmap_length;
     /* Align addr to the next page boundary */
-    addr += (uint32_t)addr % PAGE_SIZE;
+    addr += PAGE_SIZE - ((uint32_t)addr % PAGE_SIZE);
+    /* Store this as the start address for kernel heap */
+    extern void* KERNEL_HEAP_START;
+    KERNEL_HEAP_START = addr;
+    /* Now free all unused pages in [addr, KERNEL_END) */
     while (addr < KERNEL_END) {
         free_virt_page(addr);
         addr += PAGE_SIZE;

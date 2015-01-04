@@ -43,6 +43,7 @@ SECTIONS {
     .data ADDR(.text) + SIZEOF(.text) : {
         *(.data)
         *(.data2)
+        *(.rodata)
         *(.rodata.*)
     }
 
