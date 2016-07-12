@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -132,7 +132,7 @@ nop_isr:
 
 setup_isr 0, divide_error
 setup_isr 2, nmi
-setup_isr 3, breakpoint 
+setup_isr 3, breakpoint
 setup_isr 4, overflow
 setup_isr 5, bound_range
 setup_isr 6, invalid_opcode
@@ -163,5 +163,3 @@ setup_irq_isr 0x8c, irq_c
 setup_irq_isr 0x8d, irq_d
 setup_irq_isr 0x8e, irq_e
 setup_irq_isr 0x8f, irq_f
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

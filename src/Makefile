@@ -1,4 +1,4 @@
-# 
+#
 # Trantor Operating System
 # Copyright (C) 2014 Raghu Kaippully
 #
@@ -28,7 +28,7 @@ ASFLAGS := -O3 -Wall -march=i586
 CC := i586-elf-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -march=i586 -std=c99 -ffreestanding 
+CFLAGS := -O3 -Wall -march=i586 -std=c99 -ffreestanding
 
 # Always use ld for linking
 LD := i586-elf-ld

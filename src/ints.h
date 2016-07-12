@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -35,5 +35,3 @@ typedef enum {
 } bool;
 
 #endif
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

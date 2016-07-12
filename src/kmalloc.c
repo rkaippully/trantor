@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -119,7 +119,7 @@ static void* _kmalloc(uint32_t size)
         */
         kmalloc_header* last_block = split_block_with_extra_space(block, size);
         mem_list_tail = last_block;
-        
+
         return (void*)block + sizeof(kmalloc_header);
     } else {
         // We found a block with enough space at ptr. Split it if needed
@@ -169,5 +169,3 @@ void kfree(void* ptr)
 
     release_mutex(&kmalloc_mutex);
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

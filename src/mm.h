@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -28,5 +28,3 @@ extern void alloc_virt_page(const void* addr);
 extern void free_virt_page(const void* addr);
 
 #endif
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

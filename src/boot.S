@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -98,7 +98,7 @@ _start:
     /* Memory initialization steps */
 
 
-    /* 
+    /*
         Multiboot loader will pass information in %ebx, let us store that somewhere before
         initializing memory.
     */
@@ -187,7 +187,7 @@ halt:
     movl    $physical_addr_of(kernel_page_dir), %edi
     /* copy the paging entry to the correct position in the directory */
     movl    %eax, (%edi)
-    
+
     movl    $KERNEL_SIZE, %ecx
     /* ecx holds the count of kernel pages */
     shrl    $12, %ecx
@@ -244,7 +244,7 @@ halt:
 
     /* We no longer need the identity paging for the first 4MB, remove it */
     movl    $0, kernel_page_dir
-    
+
     /* Set up all segment registers again, this time with virtual address in GDT */
     movw    $KERNEL_DATA, %ax
     movw    %ax, %ds
@@ -341,6 +341,3 @@ multiboot_mmap:
 .global pmm_bitmap_array
 pmm_bitmap_array:
     .fill   128 * 1024, 1, 0
-
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

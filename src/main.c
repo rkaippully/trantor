@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -32,5 +32,3 @@ void kernel_main()
 {
     init();
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

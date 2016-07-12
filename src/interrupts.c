@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -239,5 +239,3 @@ void interrupts_init()
     /* Load the IDT and enable all interrupts */
     __asm__ volatile("lidt %0; sti" :: "m"(idt_descr));
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

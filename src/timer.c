@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -78,12 +78,10 @@ void timer_isr()
     }
     milli_secs_elapsed += millis_increment;
 
-    /* 
+    /*
         Update real time from RTC every 500 ticks. We don't actually update the time to
         keep this ISR fast. We instead set a flag here and the next call to get realtime
         clock will get the value from RTC.
     */
     rtc_reload = true;
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -25,10 +25,10 @@
     So we remap those interrupt vectors using the programmable interrupt controller (PIC).
     IRQs 0-15 are mapped to interrupt vectors 0x80-0x8f respectively.
 
-    There are two PICs - a master and a slave. 
+    There are two PICs - a master and a slave.
 */
 
-/* 
+/*
     I/O ports for master and slave PIC. The command posrt is used to send commands and get
     status. The data port is for transferring data and to get access interrupt masks.
 */
@@ -50,7 +50,7 @@ static const uint8_t ICW1_VAL = 0x11;
 static const uint8_t IRQ_0 = 0x80;
 static const uint8_t IRQ_8 = 0x88;
 
-/* 
+/*
     ICW3 is used to let PICs know how they are connected to each other. The slave is
     connected to IR2 line on the master. We set the corresponding bit (bit 2) in the
     master PIC - i.e. value 0x04. We also set this value in binary form (010 = 0x02) on
@@ -86,5 +86,3 @@ void pic_init()
     out_byte(MASTER_PIC_DATA_PORT, 0);
     out_byte(SLAVE_PIC_DATA_PORT, 0);
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

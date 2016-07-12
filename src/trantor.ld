@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -51,18 +51,16 @@ SECTIONS {
     .bss ADDR(.data) + SIZEOF(.data) : {
         *(.bss)
         *(COMMON)
-    
+
         /* Physical memory bitmap is stored at the end of kernel */
         *(.membitmap)
 
         kernel_end = ALIGN(4096);
     }
-    
+
     /* Stuff we don't want in the kernel */
     /DISCARD/ : {
         *(.eh_frame)
         *(.comment)
     }
-} 
-
-/* vim: set expandtab ai ts=4 tw=90: */
+}

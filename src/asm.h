@@ -1,4 +1,4 @@
-/* 
+/*
     Trantor Operating System
     Copyright (C) 2014 Raghu Kaippully
 
@@ -40,5 +40,3 @@ typedef struct __attribute__((packed)) {
 } regs_t;
 
 #endif
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

@@ -172,7 +172,7 @@ static uint32_t alloc_phys_page()
 {
     /*
         Search through the PMM bitmap and find the next available free page. We store the
-        last location where we found an empty page for efficiency reasons. 
+        last location where we found an empty page for efficiency reasons.
     */
     static int last_allocated_idx = 0;
 
@@ -327,7 +327,7 @@ static void vmm_init()
 {
     /*
         We have already set up page directory and page tables in boot.S, but that covered
-        even the unused parts of PMM bitmap. Let us free that here. 
+        even the unused parts of PMM bitmap. Let us free that here.
     */
     void* addr = pmm_bitmap + pmm_bitmap_length;
     /* Align addr to the next page boundary */
@@ -350,5 +350,3 @@ void mm_init()
     pmm_init();
     vmm_init();
 }
-
-/* vim: set expandtab ai nu ts=4 tw=90: */

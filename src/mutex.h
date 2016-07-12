@@ -45,5 +45,3 @@ static inline void release_mutex(mutex_t* m)
 }
 
 #endif
-
-/* vim: set expandtab ai nu ts=4 tw=90: */
