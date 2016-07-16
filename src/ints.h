@@ -1,7 +1,7 @@
 /*
-    Trantor Operating System
+  Trantor Operating System
 
-    Copyright (C) 2014 Raghu Kaippully
+  Copyright (C) 2014 Raghu Kaippully
 */
 
 #ifndef _INTS_H
@@ -19,8 +19,8 @@ typedef signed int          int32_t;
 typedef signed long long    int64_t;
 
 typedef enum {
-    false = 0,
-    true = 1
+  false = 0,
+  true = 1
 } bool;
 
 #endif

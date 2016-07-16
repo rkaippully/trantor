@@ -1,7 +1,7 @@
 /*
-    Trantor Operating System
+  Trantor Operating System
 
-    Copyright (C) 2014 Raghu Kaippully
+  Copyright (C) 2014 Raghu Kaippully
 */
 
 #ifndef _MM_H

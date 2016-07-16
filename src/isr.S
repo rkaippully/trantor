@@ -1,123 +1,123 @@
 /*
-    Trantor Operating System
+  Trantor Operating System
 
-    Copyright (C) 2014 Raghu Kaippully
+  Copyright (C) 2014 Raghu Kaippully
 */
 
 /*
-    We need to deal with two types of interrupts. Processor generated interrupts and I/O
-    device gemenrated IRQs. This file defines interrupt service routines in assembly.
-    These ISRs does some initial set up and then invoke C functions defined in
-    interrupts.c.
+  We need to deal with two types of interrupts. Processor generated interrupts and I/O
+  device gemenrated IRQs. This file defines interrupt service routines in assembly.
+  These ISRs does some initial set up and then invoke C functions defined in
+  interrupts.c.
 */
 
 #define KERNEL_DS 0x10
 
 /* A macro to create an ISR */
 .macro setup_isr vector, name, has_error_code=0
-    .global \name\()_isr_wrapper
-    \name\()_isr_wrapper:
-        /*
-            Some exceptions do not have an error code, we push a dummy code (0) in that
-            case
-        */
-        .if \has_error_code == 0
-        pushl   $0
-        .endif
-        /* Save all registers */
-        pushal
-        /* Save the return address in %ebx */
-        movl    $1f, %ebx
-        jmp     _save_regs
+  .global \name\()_isr_wrapper
+  \name\()_isr_wrapper:
+    /*
+      Some exceptions do not have an error code, we push a dummy code (0) in that
+      case
+    */
+  .if \has_error_code == 0
+    pushl   $0
+  .endif
+  /* Save all registers */
+  pushal
+  /* Save the return address in %ebx */
+  movl    $1f, %ebx
+  jmp     _save_regs
 1:
-        /* Interrupt vector number is also pushed */
-        pushl   $\vector
+  /* Interrupt vector number is also pushed */
+  pushl   $\vector
 
-        /* Call the C ISR function */
-        call    \name\()_isr
-        jmp     _leave_isr
+  /* Call the C ISR function */
+  call    \name\()_isr
+  jmp     _leave_isr
 .endm
 
 /* Another macro to create an ISR for IRQs */
 .macro setup_irq_isr vector, name, c_func_name=irq_isr
-    .global \name\()_isr_wrapper
-    \name\()_isr_wrapper:
-        /*
-            Push a dummy error code to be consistent with non-IRQ ISRs. This will keep the
-            stack size the same for IRQs and interrupts and thus help to simplify code in
-            _leave_isr.
-        */
-        pushl   $0
-        /* Save all registers */
-        pushal
-        /* Save the return address in %ebx */
-        movl    $1f, %ebx
-        jmp     _save_regs
+  .global \name\()_isr_wrapper
+  \name\()_isr_wrapper:
+  /*
+    Push a dummy error code to be consistent with non-IRQ ISRs. This will keep the
+    stack size the same for IRQs and interrupts and thus help to simplify code in
+    _leave_isr.
+  */
+  pushl   $0
+  /* Save all registers */
+  pushal
+  /* Save the return address in %ebx */
+  movl    $1f, %ebx
+  jmp     _save_regs
 1:
-        /* IRQ number is also pushed */
-        pushl   $(\vector - 0x80)
+  /* IRQ number is also pushed */
+  pushl   $(\vector - 0x80)
 
-        /* Call the C ISR function */
-        call    \c_func_name
-        jmp     _leave_irq_isr
+  /* Call the C ISR function */
+  call    \c_func_name
+  jmp     _leave_irq_isr
 .endm
 
 
 .text
 
 /*
-    Called at the begining of ISR to save all registers in the stack and switch the data
-    segments.
+  Called at the begining of ISR to save all registers in the stack and switch the data
+  segments.
 */
 _save_regs:
-        pushl   %ds
-        pushl   %es
-        pushl   %fs
-        pushl   %gs
-        /* Switch to kernel data segment */
-        movw    $KERNEL_DS, %ax
-        movw    %ax, %ds
-        movw    %ax, %es
-        movw    %ax, %fs
-        movw    %ax, %gs
-        /* Go back to the ISR */
-        jmp     *%ebx
+  pushl   %ds
+  pushl   %es
+  pushl   %fs
+  pushl   %gs
+  /* Switch to kernel data segment */
+  movw    $KERNEL_DS, %ax
+  movw    %ax, %ds
+  movw    %ax, %es
+  movw    %ax, %fs
+  movw    %ax, %gs
+  /* Go back to the ISR */
+  jmp     *%ebx
 
 /*
     We should send an end of interrupt command to the PIC before leaving an IRQ ISR
 */
 _leave_irq_isr:
-        movb    $0x20, %al
-        /* The IRQ number is stored at (%esp), check if it is master/slave IRQ */
-        cmpl    $8, (%esp)
-        jl      1f
-        /* Send EOI to slave PIC */
-        outb    %al, $0xa0
+  movb    $0x20, %al
+  /* The IRQ number is stored at (%esp), check if it is master/slave IRQ */
+  cmpl    $8, (%esp)
+  jl      1f
+  /* Send EOI to slave PIC */
+  outb    %al, $0xa0
 1:
-        /* Send EOI to master PIC */
-        outb    %al, $0x20
-        /* Now we just follow the logic in _leave_isr */
+  /* Send EOI to master PIC */
+  outb    %al, $0x20
+  /* Now we just follow the logic in _leave_isr */
 
 /*
     Restore registers and return from ISR
 */
 _leave_isr:
-        /* Pop the interrupt vector/IRQ number from stack */
-        addl    $4, %esp
-        /* Restore registers */
-        popl    %gs
-        popl    %fs
-        popl    %es
-        popl    %ds
-        popal
-        /* Pop the error code from stack */
-        addl    $4, %esp
-        iret
+  /* Pop the interrupt vector/IRQ number from stack */
+  addl    $4, %esp
+  /* Restore registers */
+  popl    %gs
+  popl    %fs
+  popl    %es
+  popl    %ds
+  popal
+  /* Pop the error code from stack */
+  addl    $4, %esp
+  iret
 
 // An ISR that does not do anything
 .global nop_isr
 nop_isr:
-    iret
+  iret
 
 setup_isr 0, divide_error
 setup_isr 2, nmi

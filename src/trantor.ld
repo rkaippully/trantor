@@ -1,14 +1,14 @@
 /*
-    Trantor Operating System
+  Trantor Operating System
 
-    Copyright (C) 2016 Raghu Kaippully
+  Copyright (C) 2016 Raghu Kaippully
 */
 
 /*
-    Trantor linker script
+  Trantor linker script
 
-    A linker script gives us a lot of control over the generated kernel image, such as
-    the load address, output format, layout of sections in the image etc.
+  A linker script gives us a lot of control over the generated kernel image, such as
+  the load address, output format, layout of sections in the image etc.
 */
 
 /* Use 32 bit format */
@@ -17,39 +17,43 @@ OUTPUT_FORMAT("elf32-i386")
 /* The symbol at which execution starts */
 ENTRY(_start)
 
-SECTIONS {
+SECTIONS
+{
+  /* The image is loaded at 1 MB in RAM */
+  .text : AT(0x00100000)
+  {
+    /* Put the multiboot section at the begining so that it is within the first 8KB */
+    *(.multiboot)
 
-    /* The image is loaded at 1 MB in RAM */
-    .text : AT(0x00100000) {
-        /* Put the multiboot section at the begining so that it is within the first 8KB */
-        *(.multiboot)
+    *(.text)
+    *(.text.*)
+  }
 
-        *(.text)
-        *(.text.*)
-    }
+  /* Data section follows text section */
+  .data ADDR(.text) + SIZEOF(.text) :
+  {
+    *(.data)
+    *(.data2)
+    *(.rodata)
+    *(.rodata.*)
+  }
 
-    /* Data section follows text section */
-    .data ADDR(.text) + SIZEOF(.text) : {
-        *(.data)
-        *(.data2)
-        *(.rodata)
-        *(.rodata.*)
-    }
+  /* BSS follows the data section */
+  .bss ADDR(.data) + SIZEOF(.data) :
+  {
+    *(.bss)
+    *(COMMON)
 
-    /* BSS follows the data section */
-    .bss ADDR(.data) + SIZEOF(.data) : {
-        *(.bss)
-        *(COMMON)
+    /* Physical memory bitmap is stored at the end of kernel */
+    *(.membitmap)
 
-        /* Physical memory bitmap is stored at the end of kernel */
-        *(.membitmap)
+    kernel_end = ALIGN(4096);
+  }
 
-        kernel_end = ALIGN(4096);
-    }
-
-    /* Stuff we don't want in the kernel */
-    /DISCARD/ : {
-        *(.eh_frame)
-        *(.comment)
-    }
+  /* Stuff we don't want in the kernel */
+  /DISCARD/ :
+  {
+    *(.eh_frame)
+    *(.comment)
+  }
 }
