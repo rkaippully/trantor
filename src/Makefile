@@ -12,13 +12,13 @@
 AS := i586-elf-gcc
 
 # Command line flags for assembler
-ASFLAGS := -O3 -Wall -march=i586
+ASFLAGS := -O3 -Wall -march=pentium-mmx
 
 # Always use gcc as the compiler
 CC := i586-elf-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -march=i586 -std=c99 -ffreestanding
+CFLAGS := -O3 -Wall -march=pentium-mmx -std=c99 -ffreestanding
 
 # Always use ld for linking
 LD := i586-elf-ld
