@@ -117,17 +117,14 @@ typedef struct __attribute__((packed)) {
   uint16_t offset_high;
 } idt_entry;
 
-/*
-  Space for idt is allocated in boot.S
-*/
-extern idt_entry idt;
+static idt_entry idt[256] __attribute__((aligned(4096)));
 
 static struct __attribute__((packed)) {
   uint16_t limit;
   void* idt_base;
 } idt_descr = {
   256*8 - 1,
-  &idt
+  idt
 };
 
 /*
@@ -136,7 +133,7 @@ static struct __attribute__((packed)) {
 static void set_interrupt_gate(int vector, void (*isr)())
 {
   const uint16_t KERNEL_CODE_SEG = 0x08;
-  idt_entry* e = &idt + vector;
+  idt_entry* e = &idt[vector];
 
   e->offset_low = (uint32_t)(isr);
   e->segment_selector = KERNEL_CODE_SEG;

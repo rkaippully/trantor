@@ -69,6 +69,46 @@ static uint8_t* const pmm_bitmap = &pmm_bitmap_array;
 */
 static int pmm_bitmap_length;
 
+uint32_t kernel_page_table[1024] __attribute__((aligned(4096)));
+
+/* Create a GDT descriptor with the specified base address, limit, DPL, and type */
+#define make_gdt_descriptor(base, limit, dpl, type)  \
+( \
+ ((limit) & 0xffff) |                             \
+ (((base) & 0xffffff) << 16) |                    \
+ ((uint64_t)type << 40) |                         \
+ ((((((uint64_t)dpl) & 3) << 5) + 0x90) << 40) |  \
+ ((uint64_t)0x0c << 52) |                         \
+ (((((uint64_t)limit) >> 16) & 0x0f) << 48) |     \
+ ((((uint64_t)base) >> 24) << 56)                 \
+)
+
+uint64_t gdt[6] __attribute__((aligned(8))) = {
+  /* NULL decriptor */
+  0,
+  /* Kernel code segment descriptor - base = 0, limit = 4GB, selector = 0x08 */
+  make_gdt_descriptor(0, 0xffffffff, 0, 0x0a),
+  /* Kernel data segment descriptor - base = 0, limit = 4GB, selector = 0x10 */
+  make_gdt_descriptor(0, 0xffffffff, 0, 0x02),
+  /* User code segment descriptor - base = 0, limit = 4GB, selector = 0x1b */
+  make_gdt_descriptor(0, 0xffffffff, 3, 0x0a),
+  /* User data segment descriptor - base = 0, limit = 4GB, selector = 0x23 */
+  make_gdt_descriptor(0, 0xffffffff, 3, 0x02),
+  /* TSS descriptor. This will be filled in later */
+  0
+};
+
+/* LD script sets the location of these addresses. */
+extern const uint8_t kinit_start, kinit_end, kernel_start, kernel_end;
+
+struct {
+  uint16_t limit;
+  void* gdt_addr;
+} __attribute__((packed)) gdt_descriptor = {
+  6*8 - 1, /* GDT limit, there are 6 entries*/
+  gdt
+};
+
 /*
   Physical Memory Manager initialization
 
@@ -78,11 +118,6 @@ static int pmm_bitmap_length;
 */
 static void pmm_init()
 {
-  /*
-    LD script sets the location of kernel_end. Use that to compute the physical and
-    virtual ends.
-  */
-  extern const uint8_t kernel_end;
   KERNEL_END = &kernel_end;
   KERNEL_PHYS_END = (void*)((uint32_t)KERNEL_END - 0xf0000000 + 0x00100000);
 

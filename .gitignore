@@ -1,2 +1,4 @@
-src/*.o
-src/trantor.img
+src/**/*.o
+src/trantor
+src/trantor.map
+src/trantor.hd

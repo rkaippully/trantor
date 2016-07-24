@@ -19,30 +19,62 @@ ENTRY(_start)
 
 SECTIONS
 {
-  /* The image is loaded at 1 MB in RAM */
-  .text : AT(0x00100000)
+  /*
+    The image is loaded at physical address 0x00100000. The kinit sections are
+    located at 0x00100000 in the linear address space. The kernel sections are
+    located at 0xff000000 in the linear address space.
+  */
+  .kinit.text 0x00100000 :
   {
-    /* Put the multiboot section at the begining so that it is within the first 8KB */
-    *(.multiboot)
+    kinit_start = .;
 
-    *(.text)
-    *(.text.*)
+    /* Put the multiboot section at the begining so that it is within the first 8KB */
+    kinit*(.multiboot)
+
+    kinit*(.text)
+    kinit*(.text.*)
   }
 
   /* Data section follows text section */
-  .data ADDR(.text) + SIZEOF(.text) :
+  .kinit.data :
   {
-    *(.data)
-    *(.data2)
-    *(.rodata)
-    *(.rodata.*)
+    kinit*(.data)
+    kinit*(.data2)
+    kinit*(.rodata)
+    kinit*(.rodata.*)
   }
 
   /* BSS follows the data section */
-  .bss ADDR(.data) + SIZEOF(.data) :
+  .kinit.bss :
   {
-    *(.bss)
-    *(COMMON)
+    kinit*(.bss)
+    kinit*(COMMON)
+
+    kinit_end = ALIGN(4096);
+  }
+
+  .kernel.text 0xff000000 : AT(kinit_end)
+  {
+    kernel_start = .;
+
+    kernel*(.text)
+    kernel*(.text.*)
+  }
+
+  /* Data section follows text section */
+  .kernel.data :
+  {
+    kernel*(.data)
+    kernel*(.data2)
+    kernel*(.rodata)
+    kernel*(.rodata.*)
+  }
+
+  /* BSS follows the data section */
+  .kernel.bss :
+  {
+    kernel*(.bss)
+    kernel*(COMMON)
 
     /* Physical memory bitmap is stored at the end of kernel */
     *(.membitmap)
