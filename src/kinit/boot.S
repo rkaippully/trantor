@@ -214,9 +214,6 @@ halt:
   /* Let us switch to C */
   call    kernel_main
 
-	1:
-	  jmp 1b
-
   /* We should never reach here because kernel_main doesn't return, but just in case */
   jmp     halt
 
