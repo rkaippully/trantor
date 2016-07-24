@@ -252,15 +252,3 @@ mmap_length:
 .global multiboot_mmap
 multiboot_mmap:
   .fill 256, 8, 0
-
-
-/*
-  The physical memory bit map is stored at the end of kernel. It can have a maximum size
-  of 128KB to represent 4GB of memory. But during PMM initialization we'll shrink it's
-  size to match with the actual memory present in the system.
-*/
-.section .membitmap, "aw", @nobits
-
-.global pmm_bitmap_array
-pmm_bitmap_array:
-  .fill   128 * 1024, 1, 0

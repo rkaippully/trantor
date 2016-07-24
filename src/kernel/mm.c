@@ -53,7 +53,7 @@ extern mmap multiboot_mmap;
   address space before we can do page mappings. And for that mapping we need to
   allocate physical pages and that needs the PMM bitmap already populated.
 
-  So we have preallocated a 128KB pmm_bitmap in boot.S to cover the entire 32-bit
+  So we have preallocated a 128KB pmm_bitmap to cover the entire 32-bit
   address space. Here we check how much memory is available and populate the bit map
   accordingly. After mapping is completed, we release the unused portion of the
   bitmap for future allocations.
@@ -61,8 +61,7 @@ extern mmap multiboot_mmap;
   A 0 bit in the bitmap indicates that the page is in use and a 1 bit indicates that it
   is available for allocation.
 */
-extern uint8_t pmm_bitmap_array;
-static uint8_t* const pmm_bitmap = &pmm_bitmap_array;
+static uint8_t pmm_bitmap[128*1024] __attribute__((section(".membitmap")));
 
 /*
   This is the length of PMM bitmap specified in bytes
