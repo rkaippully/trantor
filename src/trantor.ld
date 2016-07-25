@@ -24,10 +24,11 @@ SECTIONS
     located at 0x00100000 in the linear address space. The kernel sections are
     located at 0xff000000 in the linear address space.
   */
-  .kinit.text 0x00100000 :
-  {
-    kinit_start = .;
+  . = 0x00100000;
+  kinit_start = .;
 
+  .kinit.text :
+  {
     /* Put the multiboot section at the begining so that it is within the first 8KB */
     kinit*(.multiboot)
 
@@ -53,10 +54,11 @@ SECTIONS
     kinit_end = ALIGN(4096);
   }
 
-  .kernel.text 0xff000000 : AT(kinit_end)
-  {
-    kernel_start = .;
+  . = 0xff000000;
+  kernel_start = .;
 
+  .kernel.text : AT(kinit_end)
+  {
     kernel*(.text)
     kernel*(.text.*)
   }

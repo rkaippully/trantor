@@ -9,6 +9,11 @@
 
 #include "ints.h"
 
+extern uint8_t kinit_end, kernel_start, kernel_end;
+
+static const void* const kstart = &kernel_start;
+static const void* const kend = &kernel_end;
+
 /* Size of a memory page - physical and virtual */
 static const int PAGE_SIZE = 4096;
 

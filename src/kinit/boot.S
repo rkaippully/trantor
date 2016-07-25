@@ -21,7 +21,6 @@
 */
 
 /* Convert a linear address to physical address. This is needed till we enable paging */
-#define physical_addr_of(x) ((x) - kernel_start + kinit_end)
 .macro physical_addr_of addr, reg
   movl  \addr, \reg
   subl  $kernel_start, \reg
@@ -203,19 +202,19 @@ halt:
 1:
 
   /* Set up all segment registers again, this time with linear address in GDT */
-  movw    $KERNEL_DATA, %ax
-  movw    %ax, %ds
-  movw    %ax, %es
-  movw    %ax, %fs
-  movw    %ax, %gs
-  movw    %ax, %ss
-  movl    $kernel_stack_end, %esp
+  movw  $KERNEL_DATA, %ax
+  movw  %ax, %ds
+  movw  %ax, %es
+  movw  %ax, %fs
+  movw  %ax, %gs
+  movw  %ax, %ss
+  movl  $kernel_stack_end, %esp
 
   /* Let us switch to C */
-  call    kernel_main
+  call  kernel_main
 
   /* We should never reach here because kernel_main doesn't return, but just in case */
-  jmp     halt
+  jmp   halt
 
 
 
@@ -246,9 +245,7 @@ kernel_stack_end:
 mmap_length:
   .long 0
 
-/*
-  Temporarily area to hold mmap provided by multiboot loader.
-*/
+/* Temporary area to hold mmap provided by multiboot loader. */
 .global multiboot_mmap
 multiboot_mmap:
   .fill 256, 8, 0
