@@ -22,7 +22,7 @@ SECTIONS
   /*
     The image is loaded at physical address 0x00100000. The kinit sections are
     located at 0x00100000 in the linear address space. The kernel sections are
-    located at 0xff000000 in the linear address space.
+    located at 0xfe000000 in the linear address space.
   */
   . = 0x00100000;
   kinit_start = .;
@@ -54,7 +54,7 @@ SECTIONS
     kinit_end = ALIGN(4096);
   }
 
-  . = 0xff000000;
+  . = 0xfe000000;
   kernel_start = .;
 
   .kernel.text : AT(kinit_end)

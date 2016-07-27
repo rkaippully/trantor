@@ -22,7 +22,7 @@
   Virtual Memory Layout
 
   0x00000000 - 0xfeffffff - user space
-  0xff000000 - 0xffbfffff - kernel space
+  0xfe000000 - 0xffbfffff - kernel space
   0xffc00000 - 0xffffffff - page tables and directory
 */
 

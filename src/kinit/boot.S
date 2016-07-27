@@ -7,16 +7,16 @@
 
 /*
   All processes in trantor have a user space and kernel space. The user space is
-	located at linear address 0x00100000 and the kernel space at 0xff000000. The
+	located at linear address 0x00100000 and the kernel space at 0xfe000000. The
 	user space runs at ring 3 and kernel space at ring 0.
 
   The kinit process is loaded by a multiboot loader and starts execution at the
 	_start symbol. The image has two parts - kinit and kernel. kinit is loaded at
-	linear address 0x00100000 and kernel at 0xff000000. Now this may seem to mean
+	linear address 0x00100000 and kernel at 0xfe000000. Now this may seem to mean
 	that kinit is running in user space but it is not. The entire code is running
 	at ring 0. This makes it easy to do all the initialization that needs ring 0.
 	At the end of initialization, kinit will stop execution and only the kernel
-	will remain in memory. The kernel is mapped at 0xff000000 in the linear
+	will remain in memory. The kernel is mapped at 0xfe000000 in the linear
 	address space of all processes including kinit.
 */
 
@@ -64,8 +64,8 @@ multiboot_header:
 /*
   Kernel starts execution here.
 
-  The kernel is linked at the linear address 0xff000000. The page tables are located at
-  0xffc00000. So that means the kernel size must be less than 12MB.
+  The kernel is linked at the linear address 0xfe000000. The page tables are located at
+  0xffc00000. So that means the kernel size must be less than 28MB.
 */
 .global _start
 _start:
@@ -114,7 +114,7 @@ halt:
   /*
     Populate page tables. The kinit and kernel sizes are always a multiple of
 	  4KB, the linker script is set up that way. We first identity map the kinit
-	  page table entries. And then map kernel pages to 0xff000000.
+	  page table entries. And then map kernel pages to 0xfe000000.
   */
 .macro fill_page_table linear_start, linear_end, physical_start, page_table_addr
 	/* edi points to the base of page table */
