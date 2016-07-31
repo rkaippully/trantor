@@ -7,16 +7,16 @@
 
 /*
   All processes in trantor have a user space and kernel space. The user space is
-	located at linear address 0x00100000 and the kernel space at 0xfe000000. The
+	located at linear address 0x00100000 and the kernel space at 0xf0000000. The
 	user space runs at ring 3 and kernel space at ring 0.
 
   The kinit process is loaded by a multiboot loader and starts execution at the
 	_start symbol. The image has two parts - kinit and kernel. kinit is loaded at
-	linear address 0x00100000 and kernel at 0xfe000000. Now this may seem to mean
+	linear address 0x00100000 and kernel at 0xf0000000. Now this may seem to mean
 	that kinit is running in user space but it is not. The entire code is running
 	at ring 0. This makes it easy to do all the initialization that needs ring 0.
 	At the end of initialization, kinit will stop execution and only the kernel
-	will remain in memory. The kernel is mapped at 0xfe000000 in the linear
+	will remain in memory. The kernel is mapped at 0xf0000000 in the linear
 	address space of all processes including kinit.
 */
 
@@ -63,9 +63,6 @@ multiboot_header:
 
 /*
   Kernel starts execution here.
-
-  The kernel is linked at the linear address 0xfe000000. The page tables are located at
-  0xffc00000. So that means the kernel size must be less than 28MB.
 */
 .global _start
 _start:
@@ -84,6 +81,7 @@ halt:
   jmp   halt
 2:
 
+read_multiboot_mmap:
   /* %esi points to the start of mmap */
   movl  48(%ebx), %esi
   /* %ecx contains the length of mmap */
@@ -93,7 +91,7 @@ halt:
   jg    halt
   movl  %ecx, mmap_length
   /* %edi points to multiboot_mmap */
-  movl  multiboot_mmap, %edi
+  movl  $multiboot_mmap, %edi
   /* now we copy the mmap to multiboot_mmap */
   rep movsb
 
@@ -114,7 +112,7 @@ halt:
   /*
     Populate page tables. The kinit and kernel sizes are always a multiple of
 	  4KB, the linker script is set up that way. We first identity map the kinit
-	  page table entries. And then map kernel pages to 0xfe000000.
+	  page table entries. And then map kernel pages to 0xf0000000.
   */
 .macro fill_page_table linear_start, linear_end, physical_start, page_table_addr
 	/* edi points to the base of page table */
@@ -143,10 +141,21 @@ halt:
   jnz 1b
 .endm
 
+setup_kinit_page_table:
   fill_page_table $kinit_start, $kinit_end, $kinit_start, $kinit_page_table
+
+setup_kernel_page_table:
   physical_addr_of  $kernel_page_table, %eax
   physical_addr_of  $kernel_start, %ebx
-  fill_page_table $kernel_start, $kernel_end, %ebx, %eax
+	fill_page_table $kernel_start, $kernel_end, %ebx, %eax
+
+  /*
+    Page table entry for kernel stack. Kernel stack spans 0xf03fe000 - 0xf03feff
+  */
+setup_kernel_stack_page_table:
+	physical_addr_of  $kernel_page_table, %eax
+  physical_addr_of  $kernel_stack_start, %ebx
+	fill_page_table $0xf03fe000, $0xf03ff000, %ebx, %eax
 
   /*
     Populate the page directory. We need only two page directory entries. One
@@ -164,9 +173,20 @@ halt:
   movl  %eax, (%ebx, %edi, 4)
 .endm
 
+setup_kinit_pde:
   fill_page_dir $kinit_page_table, $kinit_start
+
+setup_kernel_pde:
 	physical_addr_of  $kernel_page_table, %ebx
   fill_page_dir %ebx, $kernel_start
+
+  /*
+    Page table for physical memory manager stacks located at kernel_heap_start
+	*/
+setup_pmm_pde:
+  physical_addr_of  $pmm_stack_page_table, %ebx
+  physical_addr_of  $kernel_heap_start, %ecx
+  fill_page_dir %ebx, (%ecx)
 
   /*
     We also set up a recursive page directory mapping. The idea is to map the
@@ -208,7 +228,7 @@ halt:
   movw  %ax, %fs
   movw  %ax, %gs
   movw  %ax, %ss
-  movl  $kernel_stack_end, %esp
+  movl  $0xf03ff000, %esp
 
   /* Let us switch to C */
   call  kernel_main
@@ -231,14 +251,6 @@ kinit_page_dir:
 .align 4096
 kinit_page_table:
   .fill 1024, 4, 0
-
-/*
-  A 4KB kernel stack
-*/
-.align 4096
-kernel_stack_start:
-  .fill 1024, 4, 0
-kernel_stack_end:
 
 /* Length of memory map as given by multiboot loader */
 .global mmap_length

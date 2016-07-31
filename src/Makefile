@@ -41,7 +41,8 @@ IMAGE=trantor
 
 # Kernel is composed of these object files
 KINIT_OBJECTS := kinit/boot.o kinit/main.o kinit/mminit.o
-KERNEL_OBJECTS := kernel/mmbitmap.o kernel/mm.o kernel/pic.o kernel/isr.o kernel/interrupts.o kernel/timer.o kernel/kmalloc.o
+KERNEL_OBJECTS := kernel/postlude.o kernel/mm.o kernel/pic.o kernel/isr.o \
+	                kernel/interrupts.o kernel/timer.o kernel/kmalloc.o kernel/kdebug.o
 OBJECTS := $(KINIT_OBJECTS) $(KERNEL_OBJECTS)
 
 
@@ -58,6 +59,7 @@ $(HD_IMAGE): $(IMAGE)
 qemu: $(HD_IMAGE)
 	qemu-system-i386 -cpu pentium -m 32 -hda $(HD_IMAGE) -monitor stdio -no-shutdown
 
+bochs: CFLAGS += -DUSE_BOCHS_E9
 bochs: $(HD_IMAGE)
 	bochs -f bochsrc
 

@@ -23,4 +23,9 @@ typedef enum {
   true = 1
 } bool;
 
+/* Find the ceiling of m divided by n */
+#define ceil(m, n) ((m) % (n) ? ((m)/(n) + 1) : ((m)/(n)))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 #endif

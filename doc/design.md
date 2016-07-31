@@ -41,3 +41,12 @@ does the following things:
 1. kinit then sends a message to relauncher of kinit_complete and exits.
 1. relauncher launches /sbin/init on receiving kinit_complete. This starts the
    user level initialization.
+
+## Memory Layout
+User space           : 0x00100000 - 0xefffffff
+Kernel code          : 0xf0000000 - 0xf03fcfff (~4 MB, not all of which is used)
+Kernel stack         : 0xf03fe000 - 0xf03fefff (4 KB with one page gap on both
+                                                sides to avoid stack overruns)
+Kernel heap          : 0xf0400000 - 0xff7fffff (244 MB)
+Other paging structs : 0xff800000 - 0xffbfffff (4 MB)
+Self paging structs  : 0xffc00000 - 0xffffffff (4 MB)

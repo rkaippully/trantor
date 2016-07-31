@@ -21,31 +21,23 @@
 /*
   Virtual Memory Layout
 
-  0x00000000 - 0xfeffffff - user space
-  0xfe000000 - 0xffbfffff - kernel space
-  0xffc00000 - 0xffffffff - page tables and directory
+  User space           : 0x00100000 - 0xefffffff
+  Kernel code          : 0xf0000000 - 0xf03fcfff (~4 MB, not all of which is used)
+  Kernel stack         : 0xf03fe000 - 0xf03fefff (4 KB with one page gap on both
+  sides to avoid stack overruns)
+  Kernel heap          : 0xf0400000 - 0xff7fffff (244 MB)
+  Other paging structs : 0xff800000 - 0xffbfffff (4 MB)
+  Self paging structs  : 0xffc00000 - 0xffffffff (4 MB)
 */
+
+void* kernel_heap_start = (void*)0xf0400000;
 
 /*
-  We have a chicken and egg problem. We need to map the PMM bitmap to virtual
-  address space before we can do page mappings. And for that mapping we need to
-  allocate physical pages and that needs the PMM bitmap already populated.
-
-  So we have preallocated a 128KB pmm_bitmap to cover the entire 32-bit
-  address space. Here we check how much memory is available and populate the bit
-  map accordingly. After mapping is completed, we release the unused portion of
-  the bitmap for future allocations.
-
-  A 0 bit in the bitmap indicates that the page is in use and a 1 bit indicates
-  that it is available for allocation.
+  There are two pmm stacks. One tracking the low memory (< 16MB) and the other
+  for high memory (> 16MB). These are pointers to the stack tops. These stacks
+  grow from lower to higher addresses.
 */
-extern uint8_t pmm_bitmap_array;
-uint8_t* pmm_bitmap = &pmm_bitmap_array;
-
-/*
-  This is the length of PMM bitmap specified in bytes
-*/
-int pmm_bitmap_length;
+pmm_stack low_stack, high_stack;
 
 uint32_t kernel_page_table[1024] __attribute__((aligned(4096)));
 
@@ -90,29 +82,13 @@ struct {
   Allocates a physical page and returns it's base address. Returns 0 if
   allocation fails.
 */
-static uint32_t alloc_phys_page()
+static phys_page alloc_phys_page()
 {
-  /*
-    Search through the PMM bitmap and find the next available free page. We
-    store the last location where we found an empty page for efficiency reasons.
-  */
-  static int last_allocated_idx = 0;
-
-  uint32_t idx = last_allocated_idx;
-  while (pmm_bitmap[idx] == 0) {
-    if (++idx >= pmm_bitmap_length)
-      idx = 0;
-    /* Did we run out of memory? */
-    if (idx == last_allocated_idx)
-      return 0;
-  }
-  last_allocated_idx = idx;
-
-  /* Memory available at pos, find the first set bit and use that one */
-  uint32_t bit_idx;
-  __asm__ volatile("bsfl %1, %0" : "=q"(bit_idx) : "m"(pmm_bitmap[idx]));
-  pmm_bitmap[idx] &= ~(1 << bit_idx);
-  return (idx * 8 + bit_idx) * PAGE_SIZE;
+  /* Try high stack first and then low stack */
+  phys_page page = pop(&high_stack);
+  if (page == 0)
+    page = pop(&low_stack);
+  return page;
 }
 
 /*
@@ -120,8 +96,11 @@ static uint32_t alloc_phys_page()
 */
 static void free_phys_page(uint32_t addr)
 {
-  uint32_t page = addr / PAGE_SIZE;
-  pmm_bitmap[page / 8] |= 1 << (page % 8);
+  phys_page page = addr / PAGE_SIZE;
+  if (page < HIGHMEM)
+    push(&low_stack, page);
+  else
+    push(&high_stack, page);
 }
 
 

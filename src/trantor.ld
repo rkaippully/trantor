@@ -22,7 +22,7 @@ SECTIONS
   /*
     The image is loaded at physical address 0x00100000. The kinit sections are
     located at 0x00100000 in the linear address space. The kernel sections are
-    located at 0xfe000000 in the linear address space.
+    located at 0xf0000000 in the linear address space.
   */
   . = 0x00100000;
   kinit_start = .;
@@ -54,7 +54,7 @@ SECTIONS
     kinit_end = ALIGN(4096);
   }
 
-  . = 0xfe000000;
+  . = 0xf0000000;
   kernel_start = .;
 
   .kernel.text : AT(kinit_end)
@@ -78,10 +78,14 @@ SECTIONS
     kernel*(.bss)
     kernel*(COMMON)
 
-    /* Physical memory bitmap is stored at the end of kernel */
-    *(.membitmap)
-
     kernel_end = ALIGN(4096);
+  }
+
+  .kernel.postlude :
+  {
+    *(.kernel_postlude)
+
+    kernel_postlude_end = ALIGN(4096);
   }
 
   /* Stuff we don't want in the kernel */

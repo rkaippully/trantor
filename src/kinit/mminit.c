@@ -1,11 +1,11 @@
 /*
   Trantor Operating System
 
-  Copyright (C) 2014 Raghu Kaippully
+  Copyright (C) 2016 Raghu Kaippully
 */
 
 #include "ints.h"
-#include "mutex.h"
+#include "kdebug.h"
 #include "mm.h"
 
 /*
@@ -28,99 +28,126 @@ typedef struct {
 extern uint32_t mmap_length;
 extern mmap multiboot_mmap;
 
-extern uint8_t* pmm_bitmap;
-extern int pmm_bitmap_length;
+/*
+  Push `count` number of physical pages to the pmm stacks if they are not used
+  by kernel.
+*/
+static void maybe_push_pages(uint32_t base, int count)
+{
+  extern uint8_t kernel_postlude_end;
+  /* This is the last physical address used by kernel */
+  const void* kpend = (void*)&kernel_postlude_end - kstart + kiend;
+
+  for (uint32_t i = 0, addr = base; i < count; i++, addr += PAGE_SIZE) {
+    if (addr >= (uint32_t)kistart && addr < (uint32_t)kpend)
+      continue;
+
+    kdebug("Push addr=0x%08x\n", addr);
+    if (addr < HIGHMEM)
+      push(&low_stack, addr);
+    else
+      push(&high_stack, addr);
+  }
+}
 
 /*
   Physical Memory Manager initialization
 
-  We look at the memory information given by multiboot loader and allocate a bit map for
-  each available page of RAM. The bit map is stored at the end of the kernel.
+  We look at the memory information given by multiboot loader and allocate two
+  stacks that contain the addresses of free pages. The first stack - "low" stack
+  - handles memory below 16MB and the second stack - "high" stack - handle
+  memory above 16MB.
 */
 static void pmm_init()
 {
   /* First check how much memory we have */
-  uint32_t total = 0;
+  uint32_t low_total = 0, high_total = 0;
   mmap* const mmap_start = &multiboot_mmap;
   mmap* const mmap_end = ((void*)mmap_start) + mmap_length;
   for (mmap* ptr = mmap_start; ptr < mmap_end; ptr = (void*)ptr + ptr->size + 4) {
     if (ptr->type == 1 && ptr->base_high == 0) {
+      kdebug("base=0x%08x%08x, length=0x%08x%08x\n", ptr->base_high,
+             ptr->base_low, ptr->length_high, ptr->length_low);
+
       /* We might have more than 4GB RAM, limit it to 4GB in that case */
-      uint32_t given_length = ptr->length_low;
-      uint32_t max_length = 0xffffffff - ptr->base_low + 1;
-      ptr->length_low = max_length < given_length ? max_length : given_length;
+      uint64_t end = ptr->length_high;
+      end = (end << 32) + ptr->length_low + ptr->base_low;
+      if (end > 0x100000000ull)
+        ptr->length_low = 0x100000000ull - ptr->base_low;
 
       /* Both base address and length should be page aligned */
       int offset = ptr->base_low % PAGE_SIZE;
-      ptr->base_low += PAGE_SIZE - offset;
+      if (offset) {
+        ptr->base_low += PAGE_SIZE - offset;
+        ptr->length_low -= PAGE_SIZE - offset;
+      }
       offset = ptr->length_low % PAGE_SIZE;
-      ptr->length_low -= offset;
+      if (offset) {
+        ptr->length_low -= offset;
+      }
 
-      total += ptr->length_low;
-    }
-  }
+      /*
+        We don't use the first page of RAM. This will preserve the real mode IVT
+        if if we need it. But more importantly, a return value of 0 from
+        alloc_phys_page() is used to indicate an error in allocation.
+      */
+      if (ptr->base_low == 0) {
+        ptr->base_low += PAGE_SIZE;
+        ptr->length_low -= PAGE_SIZE;
+      }
 
-  /* How many pages do we have? */
-  uint32_t page_count = total / PAGE_SIZE;
-  /* Number of bytes we need in the PMM bitmap */
-  pmm_bitmap_length = page_count / 8;
-  if (page_count % 8)
-    pmm_bitmap_length++;
-  /* Number of page tables needed for PMM bitmap */
-  int bitmap_page_count = pmm_bitmap_length / PAGE_SIZE;
-  if (pmm_bitmap_length % PAGE_SIZE)
-    bitmap_page_count++;
-
-  /* Mark each available page in the bitmap */
-  for (mmap* ptr = mmap_start; ptr < mmap_end; ptr = (void*)ptr + ptr->size + 4) {
-    if (ptr->type == 1 && ptr->base_high == 0) {
-      for (uint32_t i = 0; i < ptr->length_low; i += PAGE_SIZE) {
-        uint32_t addr = ptr->base_low + i;
-        int page_num = addr / PAGE_SIZE;
-        /* The bit position for the page at addr */
-        uint8_t bit_to_set = 1 << (page_num % 8);
-        /* Set the bit to indicate that the page is available */
-        pmm_bitmap[page_num / 8] |= bit_to_set;
+      /* The region might be straddling 16MB mark */
+      if (ptr->base_low >= HIGHMEM) {
+        high_total += ptr->length_low;
+      } else {
+        uint32_t end = ptr->base_low + ptr->length_low;
+        if (end <= HIGHMEM)
+          low_total += ptr->length_low;
+        else {
+          low_total += HIGHMEM - ptr->base_low;
+          high_total += end - HIGHMEM;
+        }
       }
     }
   }
 
-  /*
-    Mark the kernel physical memory as used.
-  */
-  const void* kphys_start = &kinit_end;
-  const void* kphys_end = &kernel_end - &kernel_start + kphys_start;
-  for (const void* addr = kphys_start;
-       addr < kphys_end;
-       addr += PAGE_SIZE) {
-    int page_num = (uint32_t)addr / PAGE_SIZE;
-    /* The bit position for the page at addr */
-    uint8_t bit_to_clear = (1 << (page_num % 8));
-    /* Clear the bit to indicate that the page is not available */
-    pmm_bitmap[page_num / 8] &= ~bit_to_clear;
-  }
+  /* How many pages do we have? */
+  uint32_t low_page_count = low_total / PAGE_SIZE;
+  uint32_t high_page_count = high_total / PAGE_SIZE;
+  kdebug("low_total = 0x%08x, high_total = 0x%08x\n", low_total, high_total);
 
-  /*
-    We also mark the first page of RAM unusable. This will preserve the real mode IVT
-    if we need it. But more importantly, a return value of 0 from alloc_phys_page() is
-    used to indicate an error in allocation.
-  */
-  pmm_bitmap[0] &= ~1;
-}
+  /* We need (low_page_count+high_page_count)*4 bytes for the stack. */
+  uint32_t pages_for_stack = ceil(low_page_count+high_page_count, 1024);
+  kdebug("low_page_count = %d, high_page_count = %d, pages_for_stack = %d\n", low_page_count, high_page_count, pages_for_stack);
 
-static void vmm_init()
-{
-  /*
-    We have already set up page directory and page tables in boot.S, but that covered
-    even the unused parts of PMM bitmap. Let us free that here.
-  */
-  void* addr = pmm_bitmap + pmm_bitmap_length;
-  /* Align addr to the next page boundary */
-  addr += PAGE_SIZE - ((uint32_t)addr % PAGE_SIZE);
-  /* Now free all unused pages in [addr, KERNEL_END) */
-  while (addr < kend) {
-    free_virt_page(addr);
-    addr += PAGE_SIZE;
+  /* First get physical memory for stack */
+  int i = 0;
+  void* addr = kernel_heap_start;
+  for (mmap* ptr = mmap_start; ptr < mmap_end; ptr = (void*)ptr + ptr->size + 4) {
+    if (ptr->type == 1 && ptr->base_high == 0 && ptr->length_low >= PAGE_SIZE) {
+      /* All initial pages are allocated to the stack */
+      if (i < pages_for_stack) {
+        int num_pages = min(pages_for_stack-i, ptr->length_low/PAGE_SIZE);
+        kdebug("For stack: %d pages at phys=0x%08x linear=0x%08x\n", num_pages, ptr->base_low, addr);
+        memory_map(ptr->base_low, addr, num_pages);
+        addr += num_pages * PAGE_SIZE;
+        i += num_pages;
+
+        /* Set up the stack top pointers if we are done setting up the stack */
+        if (i == pages_for_stack) {
+          low_stack.base = low_stack.top = kernel_heap_start;
+          high_stack.base = high_stack.top = low_stack.top + low_page_count;
+          kernel_heap_start = high_stack.top + high_page_count;
+
+          /* Push any remaining pages to the stack */
+          maybe_push_pages(ptr->base_low + num_pages*PAGE_SIZE, ptr->length_low/PAGE_SIZE - num_pages);
+        }
+      }
+      /* The stack is set up, push these pages to the appropriate stack */
+      else {
+        maybe_push_pages(ptr->base_low, ptr->length_low/PAGE_SIZE);
+      }
+    }
   }
 }
 
@@ -130,5 +157,4 @@ static void vmm_init()
 void mm_init()
 {
   pmm_init();
-  vmm_init();
 }
