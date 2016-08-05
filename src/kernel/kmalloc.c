@@ -6,17 +6,10 @@
 
 #include "mm.h"
 #include "ints.h"
-#include "mutex.h"
 
 /*
   Dynamic memory allocation for the kernel
 */
-
-/*
-  Kernel heap start and end points. KERNEL_HEAP_START is set up by vmm_init() in mm.c.
-*/
-void* const KERNEL_HEAP_START;
-void* const KERNEL_HEAP_END = (void*)0xffc00000;
 
 /*
   We use a simple memory allocation scheme.
@@ -59,7 +52,7 @@ static kmalloc_header* split_block_with_extra_space(kmalloc_header* const block,
   }
 }
 
-static void* _kmalloc(uint32_t size)
+void* kmalloc(uint32_t size)
 {
   // Find a block in the list that will fit the size
   kmalloc_header* ptr = mem_list_head;
@@ -72,10 +65,10 @@ static void* _kmalloc(uint32_t size)
   // Do we need to allocate more space?
   if (ptr == 0) {
     if (next_page_to_alloc == 0)
-      next_page_to_alloc = KERNEL_HEAP_START;
+      next_page_to_alloc = kernel_heap_start;
 
     // Did we run out of address space?
-    if (next_page_to_alloc + size + sizeof(kmalloc_header) >= KERNEL_HEAP_END)
+    if (next_page_to_alloc + size + sizeof(kmalloc_header) >= kernel_heap_end)
       return 0;
 
     // The memory block will be located here
@@ -118,20 +111,8 @@ static void* _kmalloc(uint32_t size)
   }
 }
 
-static mutex_t kmalloc_mutex;
-
-void* kmalloc(uint32_t size)
-{
-  acquire_mutex(&kmalloc_mutex);
-  void* addr = _kmalloc(size);
-  release_mutex(&kmalloc_mutex);
-  return addr;
-}
-
 void kfree(void* ptr)
 {
-  acquire_mutex(&kmalloc_mutex);
-
   kmalloc_header* block = ptr - sizeof(kmalloc_header);
   block->in_use = false;
 
@@ -155,6 +136,4 @@ void kfree(void* ptr)
     else
       mem_list_tail = block;
   }
-
-  release_mutex(&kmalloc_mutex);
 }

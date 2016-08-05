@@ -10,7 +10,9 @@
 #include "ints.h"
 
 extern uint8_t kinit_start, kinit_end, kernel_start, kernel_end;
+
 extern void* kernel_heap_start;
+extern const void* kernel_heap_end;
 
 static const void* const kistart = &kinit_start;
 static const void* const kiend = &kinit_end;

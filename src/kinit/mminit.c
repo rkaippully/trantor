@@ -137,7 +137,12 @@ static void pmm_init()
         if (i == pages_for_stack) {
           low_stack.base = low_stack.top = kernel_heap_start;
           high_stack.base = high_stack.top = low_stack.top + low_page_count;
+
+          // Kernel heap starts at the next page boundary after the stacks
           kernel_heap_start = high_stack.top + high_page_count;
+          uint32_t offset = (uint32_t)kernel_heap_start % PAGE_SIZE;
+          if (offset != 0)
+            kernel_heap_start = (void*)((uint32_t)kernel_heap_start + PAGE_SIZE - offset);
 
           /* Push any remaining pages to the stack */
           maybe_push_pages(ptr->base_low + num_pages*PAGE_SIZE, ptr->length_low/PAGE_SIZE - num_pages);

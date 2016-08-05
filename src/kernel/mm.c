@@ -31,6 +31,7 @@
 */
 
 void* kernel_heap_start = (void*)0xf0400000;
+const void* kernel_heap_end = (void*)0xff800000;
 
 /*
   There are two pmm stacks. One tracking the low memory (< 16MB) and the other
