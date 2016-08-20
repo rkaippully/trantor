@@ -12,6 +12,7 @@
  */
 
 extern void mm_init();
+extern void proc_init();
 extern void pic_init();
 extern void interrupts_init();
 extern void timer_init();
@@ -19,6 +20,7 @@ extern void timer_init();
 static void init()
 {
   mm_init();
+  proc_init();
   pic_init();
   timer_init();
   interrupts_init();

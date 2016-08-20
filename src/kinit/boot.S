@@ -241,6 +241,15 @@ setup_pmm_pde:
 .bss
 
 /*
+  A 4KB sized user mode stack.
+*/
+.align 4096
+.global user_stack_start, user_stack_end
+user_stack_start:
+.fill 1024, 4, 0
+user_stack_end:
+
+/*
   The page directory and table for kernel initialization are located here. Both should
   be aligned to 4KB.
 */

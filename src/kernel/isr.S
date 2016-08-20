@@ -86,6 +86,7 @@ _save_regs:
 /*
     We should send an end of interrupt command to the PIC before leaving an IRQ ISR
 */
+.globl _leave_irq_isr
 _leave_irq_isr:
   movb    $0x20, %al
   /* The IRQ number is stored at (%esp), check if it is master/slave IRQ */

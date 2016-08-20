@@ -1,11 +1,12 @@
 /*
   Trantor Operating System
 
-  Copyright (C) 2014 Raghu Kaippully
+  Copyright (C) 2016 Raghu Kaippully
 */
 
 #include "ints.h"
 #include "mm.h"
+#include "mminternal.h"
 
 /*
   The memory manager
@@ -42,32 +43,18 @@ pmm_stack low_stack, high_stack;
 
 uint32_t kernel_page_table[1024] __attribute__((aligned(4096)));
 
-/*
-  Create a GDT descriptor with the specified base address, limit, DPL, and type
-*/
-#define make_gdt_descriptor(base, limit, dpl, type)  \
-( \
- ((limit) & 0xffff) |                             \
- (((base) & 0xffffff) << 16) |                    \
- ((uint64_t)type << 40) |                         \
- ((((((uint64_t)dpl) & 3) << 5) + 0x90) << 40) |  \
- ((uint64_t)0x0c << 52) |                         \
- (((((uint64_t)limit) >> 16) & 0x0f) << 48) |     \
- ((((uint64_t)base) >> 24) << 56)                 \
-)
-
 uint64_t gdt[6] __attribute__((aligned(8))) = {
   /* NULL decriptor */
   0,
   /* Kernel code segment descriptor - base = 0, limit = 4GB, selector = 0x08 */
-  make_gdt_descriptor(0, 0xffffffff, 0, 0x0a),
+  make_gdt_descriptor(0, 0xffffffff, 0, 0x1a),
   /* Kernel data segment descriptor - base = 0, limit = 4GB, selector = 0x10 */
-  make_gdt_descriptor(0, 0xffffffff, 0, 0x02),
+  make_gdt_descriptor(0, 0xffffffff, 0, 0x12),
   /* User code segment descriptor - base = 0, limit = 4GB, selector = 0x1b */
-  make_gdt_descriptor(0, 0xffffffff, 3, 0x0a),
+  make_gdt_descriptor(0, 0xffffffff, 3, 0x1a),
   /* User data segment descriptor - base = 0, limit = 4GB, selector = 0x23 */
-  make_gdt_descriptor(0, 0xffffffff, 3, 0x02),
-  /* TSS descriptor. This will be filled in later */
+  make_gdt_descriptor(0, 0xffffffff, 3, 0x12),
+  /* TSS descriptor. This will be filled in procinit.c */
   0
 };
 
@@ -144,6 +131,7 @@ static paging_t* const page_tables = (paging_t*)0xffc00000;
 static inline void new_paging_entry(paging_t* entry, uint32_t phys_addr, bool is_kernel)
 {
   /* TODO: handle out of memory */
+  /* TODO: map this to all processes if this is a kernel page */
   entry->fields.present = 1;
   entry->fields.writable = 1;
   entry->fields.user_mode = !is_kernel;
@@ -161,9 +149,9 @@ static inline void invlpg(const void* const addr)
 /*
   Memory mapping
 
-  This function is used by device drivers to map physical memory to a virtual address.
-  The addresses must be 4KB page aligned. 'num_pages' is the number of pages that need
-  to be mapped.
+  This function is used to map physical memory to a virtual address. The
+  addresses must be 4KB page aligned. 'num_pages' is the number of pages that
+  need to be mapped.
 */
 void memory_map(uint32_t phys_addr, const void* virt_addr, int num_pages)
 {

@@ -4,8 +4,9 @@
   Copyright (C) 2014 Raghu Kaippully
 */
 
-#include "mm.h"
 #include "ints.h"
+#include "mm.h"
+#include "mminternal.h"
 
 /*
   Dynamic memory allocation for the kernel

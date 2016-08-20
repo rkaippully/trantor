@@ -19,17 +19,18 @@
 
 ## Boot Process
 
-The multiboot loader loads the kernel image (kinit). The kinit process (pid=0)
+The multiboot loader loads the kernel image (kinit). The kinit process (pid=1)
 does the following things:
 
 1. Initialize the memory manager.
+1. Initialize process structs.
 1. Initialize the exception handlers.
 1. Initialize the IRQ handlers.
 1. Initialize the timer.
 1. There are two multiboot modules loaded - vfs and initrd image. Start
-   the vfs process (pid=1).
+   the vfs process (pid=2).
 1. Mount the initrd content at /.
-1. Start /sbin/relauncher (pid=2).
+1. Start /sbin/relauncher (pid=3).
 1. relauncher will read all commands in /etc/relauncher.conf and start driver processes.
    - There will be some mechanism to run /sbin/drivers/sysfs,
      /sbin/drivers/devfs, and /sbin/hwscan first and only on completion load all

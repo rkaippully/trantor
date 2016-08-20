@@ -7,6 +7,7 @@
 #include "ints.h"
 #include "kdebug.h"
 #include "mm.h"
+#include "mminternal.h"
 
 /*
   See comments in kernel/mm.c to understand the memory manager
@@ -51,14 +52,14 @@ static void maybe_push_pages(uint32_t base, int count)
 }
 
 /*
-  Physical Memory Manager initialization
+  Memory Manager initialization
 
   We look at the memory information given by multiboot loader and allocate two
   stacks that contain the addresses of free pages. The first stack - "low" stack
   - handles memory below 16MB and the second stack - "high" stack - handle
   memory above 16MB.
 */
-static void pmm_init()
+void mm_init()
 {
   /* First check how much memory we have */
   uint32_t low_total = 0, high_total = 0;
@@ -154,12 +155,4 @@ static void pmm_init()
       }
     }
   }
-}
-
-/*
-  Entry point for memory manager
-*/
-void mm_init()
-{
-  pmm_init();
 }

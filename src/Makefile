@@ -40,9 +40,10 @@ LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T $(LINKE
 IMAGE=trantor
 
 # Kernel is composed of these object files
-KINIT_OBJECTS := kinit/boot.o kinit/main.o kinit/mminit.o
+KINIT_OBJECTS := kinit/boot.o kinit/main.o kinit/mminit.o kinit/procinit.o
 KERNEL_OBJECTS := kernel/postlude.o kernel/mm.o kernel/pic.o kernel/isr.o \
-	                kernel/interrupts.o kernel/timer.o kernel/kmalloc.o kernel/kdebug.o
+	                kernel/interrupts.o kernel/timer.o kernel/kmalloc.o \
+                  kernel/proc.o kernel/kdebug.o
 OBJECTS := $(KINIT_OBJECTS) $(KERNEL_OBJECTS)
 
 
