@@ -11,8 +11,7 @@
   the load address, output format, layout of sections in the image etc.
 */
 
-/* Use 32 bit format */
-OUTPUT_FORMAT("elf32-i386")
+OUTPUT_FORMAT("coff-go32")
 
 /* The symbol at which execution starts */
 ENTRY(_start)

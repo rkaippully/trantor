@@ -1,32 +1,34 @@
 #
 # Trantor Operating System
 #
-# Copyright (C) 2014 Raghu Kaippully
+# Copyright (C) 2017 Raghu Kaippully
 #
 
 #
 # Makefile for Trantor OS
 #
 
+GCC_PREFIX := i586-pc-msdosdjgpp
+
 # Always use gcc as assembler
-AS := i586-elf-gcc
+AS := $(GCC_PREFIX)-gcc
 
 # Command line flags for assembler
-ASFLAGS := -O3 -Wall -march=pentium-mmx
+ASFLAGS := -O3 -Wall -I boot
 
 # Always use gcc as the compiler
-CC := i586-elf-gcc
+CC := $(GCC_PREFIX)-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -march=pentium-mmx -std=c11 -ffreestanding -Iinclude
+CFLAGS := -O3 -Wall -march=i386 -std=c11 -ffreestanding -Iinclude
 
 # Always use ld for linking
-LD := i586-elf-ld
+LD := $(GCC_PREFIX)-ld
 LINKER_SCRIPT := trantor.ld
 
 # Command line flags for the linker
-LIBDIR := $(dir $(shell which i586-elf-gcc))/../lib/gcc/i586-elf/$(shell i586-elf-gcc -dumpversion)
-LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T $(LINKER_SCRIPT) -L$(LIBDIR) -lgcc
+LIBDIR := $(dir $(shell which $(CC)))../lib/gcc/$(GCC_PREFIX)/$(shell $(CC) -dumpversion)
+LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -L$(LIBDIR) -lgcc
 
 # How to compile assembly source code
 %.o: %.S
@@ -37,32 +39,39 @@ LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -m elf_i386 -T $(LINKE
 	$(CC) $(CFLAGS) -c -o $*.o $*.c
 
 # The kernel is compiled to this file
-IMAGE=trantor
+KERNEL := trantor
+KERNEL_IMG := $(KERNEL).sys
+
+# Boot sector / MBR images
+BOOT_IMGS   := boot/bootchs.img boot/bootlba.img boot/mbr.img
+PRELUDE_IMG := boot/prelude.img
 
 # Kernel is composed of these object files
-KINIT_OBJECTS := kinit/boot.o kinit/main.o kinit/mminit.o kinit/procinit.o
-KERNEL_OBJECTS := kernel/postlude.o kernel/mm.o kernel/pic.o kernel/isr.o \
-	                kernel/interrupts.o kernel/timer.o kernel/kmalloc.o \
-                  kernel/proc.o kernel/kdebug.o
-OBJECTS := $(KINIT_OBJECTS) $(KERNEL_OBJECTS)
+KOBJECTS := kernel/main.o
 
+boot/%.img: boot/%.o
+	$(LD) $(LDFLAGS) -T trantor-boot.ld -o $@ $^
 
-# The default Make target will compile the kernel
-$(IMAGE): $(OBJECTS) $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) -Map=$(IMAGE).map -o $@ $^
+.phony: clean qemu bochs
 
-# Emulate the operaing system
-HD_IMAGE=$(IMAGE).hd
+$(KERNEL_IMG): $(PRELUDE_IMG) $(KERNEL)
+	cat $^ > $@
 
-$(HD_IMAGE): $(IMAGE)
-	./mkhdimg $^ $@
+$(KERNEL): $(KOBJECTS)
+	$(LD) $(LDFLAGS) -T $(LINKER_SCRIPT) -Map=$(KERNEL).map -o $@ $^
 
-qemu: $(HD_IMAGE)
-	qemu-system-i386 -cpu pentium -m 32 -hda $(HD_IMAGE) -monitor stdio -no-shutdown
+# hard disk image to emulate the operaing system
+HD_IMG := trantor.hd
+
+$(HD_IMG): $(KERNEL) $(BOOT_IMGS)
+	tools/mkhdimg $^ $@
+
+qemu: $(HD_IMG)
+	qemu-system-i386 -cpu 386 -m 2 -hda $(HD_IMG) -monitor stdio -no-shutdown
 
 bochs: CFLAGS += -DUSE_BOCHS_E9
-bochs: $(HD_IMAGE)
+bochs: $(HD_IMG)
 	bochs -f bochsrc
 
 clean:
-	$(RM) $(IMAGE) $(IMAGE).map $(OBJECTS) $(HD_IMAGE)
+	$(RM) $(KERNEL) $(KERNEL).map $(KERNEL_IMG) $(BOOT_IMGS) $(PRELUDE_IMG) $(KOBJECTS) $(HD_IMG)
