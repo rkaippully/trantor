@@ -1,53 +1,26 @@
 # Design of Trantor OS
 
-## Device Support
+## Introduction
 
-1. Graphics Card - Shared buffer
-1. Keyboard - Interrupt
-1. IDE (HD/CD-ROM) - Shared buffer
-1. RTC - Interrupt
-1. Timer - Interrupt
-1. Mouse - Interrupt
-1. Soundcard - Shared buffer
+Trantor is a 32-bit operating system compatible with MS-DOS 6.22 and DPMI
+specification 1.0. Trantor runs on IBM PC compatible systems with the following
+hardware.
 
-## Kernel Functions
+* 80386 or compatible CPU
+* At least 2 MB RAM
+* VGA/SVGA compatible video card
+* PS/2 keyboard
+* PS/2 mouse
+* Floppy disk
+* IDE HD/CD-ROM
 
-- Create / terminate process
-- Create / terminate thread
-- Timer
-- IPC
+Trantor can run more than one DOS environment and provide multitasking. Each DOS
+environment is called a DOS console. You can switch between consoles with
+Alt+Tab. You can launch a new console with Ctrl+Esc. There is only one console
+created at boot. But more can be launched with Ctrl+Esc.
 
-## Boot Process
+## Architecture
 
-The multiboot loader loads the kernel image (kinit). The kinit process (pid=1)
-does the following things:
-
-1. Initialize the memory manager.
-1. Initialize process structs.
-1. Initialize the exception handlers.
-1. Initialize the IRQ handlers.
-1. Initialize the timer.
-1. There are two multiboot modules loaded - vfs and initrd image. Start
-   the vfs process (pid=2).
-1. Mount the initrd content at /.
-1. Start /sbin/relauncher (pid=3).
-1. relauncher will read all commands in /etc/relauncher.conf and start driver processes.
-   - There will be some mechanism to run /sbin/drivers/sysfs,
-     /sbin/drivers/devfs, and /sbin/hwscan first and only on completion load all
-     other drivers.
-   - The first two will setup the sysfs mount at /sys and devfs mount at /dev.
-1. relauncher sends a message to kinit on successful driver loading.
-1. kinit then switches the root mount to the root device specified in the
-   multiboot parameters. switch-mount will also remount /sys and /dev.
-1. kinit then sends a message to relauncher of kinit_complete and exits.
-1. relauncher launches /sbin/init on receiving kinit_complete. This starts the
-   user level initialization.
-
-## Memory Layout
-User space           : 0x00100000 - 0xefffffff
-Kernel code          : 0xf0000000 - 0xf03fcfff (~4 MB, not all of which is used)
-Kernel stack         : 0xf03fe000 - 0xf03fefff (4 KB with one page gap on both
-                                                sides to avoid stack overruns)
-Kernel heap          : 0xf0400000 - 0xff7fffff (244 MB)
-Other paging structs : 0xff800000 - 0xffbfffff (4 MB)
-Self paging structs  : 0xffc00000 - 0xffffffff (4 MB)
+Trantor is a 32-bit multitasking operating system running on IA-32 compatible
+CPUs. It has a monolithic kernel with some limited support for loading driver
+modules.
