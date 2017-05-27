@@ -10,7 +10,7 @@
   */
 
 oem_name:
-  .ascii "TRANTOR "
+  .fill  8, 1, 0
 
 bpb:
 
@@ -41,8 +41,8 @@ ebpb:
   .byte  0              // Reserved
   .byte  0              // Extended boot signature
   .long  0              // Volume ID
-  .ascii "NO NAME    "  // Volume label
-  .ascii "FAT     "     // File system type
+  .fill  11, 1, 0       // Volume label
+  .fill  8, 1, 0        // File system type
 .endm
 
 .macro relocate

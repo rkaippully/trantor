@@ -26,8 +26,10 @@ pentry_end_sec:
 	.struct pentry_end_sec+1
 pentry_end_cylinder:
 	.struct pentry_end_cylinder+1
-pentry_lba_start:
-  .struct pentry_lba_start+4
+pentry_lba_start_low:
+  .struct pentry_lba_start_low+2
+pentry_lba_start_high:
+  .struct pentry_lba_start_high+2
 pentry_sec_count:
   .struct pentry_sec_count+4
 pentry_end:
@@ -69,11 +71,16 @@ active_partition:
   movw  $0x55aa, %bx
   movb  $0x41, %ah
   int   $0x13
-  jc    read_chs
+  jc    no_lba_support
   cmpw  $0xaa55, %bx
-  jne   read_chs
+  jne   no_lba_support
 
 read_lba:
+	movw  pentry_lba_start_low(%si), %cx
+	movw  %cx, disk_address_packet+8
+	movw  pentry_lba_start_high(%si), %cx
+	movw  %cx, disk_address_packet+10
+
 	movw  $5, %cx   // Retry count for read
   movw  $disk_address_packet, %si
 1:
@@ -87,24 +94,6 @@ read_fail:
 	movw  $disk_read_error_msg, %si
 	jmp   print_msg
 
-read_chs:
-  pushw $5    // Retry count
-  movw  %sp, %bp
-1:
-  movb  pentry_start_head(%si), %dh
-  movw  pentry_start_sec(%si), %cx
-  movw  $(LOAD_ADDR >> 4), %bx
-  movw  %bx, %es
-  xorw  %bx, %bx
-  movw  $0x0201, %ax
-  int   $0x13
-  jnc   run_system
-  xorb  %ah, %ah
-  int   $0x13
-  decw  (%bp)
-  jz    read_fail
-  jmp   1b
-
 run_system:
   ljmp  $0, $LOAD_ADDR
 
@@ -114,11 +103,19 @@ no_bootable_partition:
 
   def_print_msg
 
+no_lba_support:
+	movw  $no_lba_support_msg, %si
+	jmp   print_msg
+
+
 no_bootable_partition_msg:
 	.asciz "No bootable partition found."
 
 disk_read_error_msg:
 	.asciz "Disk read error."
+
+no_lba_support_msg:
+  .asciz "Disk does not support LBA mode."
 
 disk_address_packet:
 	.byte   0x10              // Size of packet
@@ -126,8 +123,10 @@ disk_address_packet:
 	.short  1                 // Number of blocks to transfer
 	.short  0                 // Offset
 	.short  (LOAD_ADDR >> 4)  // Segment
-	.int    0                 // Low LBA block number
-	.int    0                 // High LBA block number
+	.short  0                 // LBA block number (short 1)
+	.short  0                 // LBA block number (short 2)
+	.short  0                 // LBA block number (short 3)
+	.short  0                 // LBA block number (short 4)
 
 // Partition table starts here
 . = 0x1be

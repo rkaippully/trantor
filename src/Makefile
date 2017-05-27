@@ -52,7 +52,7 @@ KOBJECTS := kernel/main.o
 boot/%.img: boot/%.o
 	$(LD) $(LDFLAGS) -T trantor-boot.ld -o $@ $^
 
-.phony: clean qemu bochs
+.phony: clean qemu bochs qemu-fd
 
 $(KERNEL_IMG): $(PRELUDE_IMG) $(KERNEL)
 	cat $^ > $@
@@ -60,18 +60,45 @@ $(KERNEL_IMG): $(PRELUDE_IMG) $(KERNEL)
 $(KERNEL): $(KOBJECTS)
 	$(LD) $(LDFLAGS) -T $(LINKER_SCRIPT) -Map=$(KERNEL).map -o $@ $^
 
-# hard disk image to emulate the operaing system
+
+
+#
+#	Testing/Emulation
+#
+
+T_CC := gcc
+T_CFLAGS := -O3 -Wall
+T_LD := gcc
+T_LDFLAGS :=
+T_MKBOOT := tools/mkboot
+
+# disk images to emulate/test the operaing system
+FD_IMG := trantor.fd
 HD_IMG := trantor.hd
 
-$(HD_IMG): $(KERNEL) $(BOOT_IMGS)
-	tools/mkhdimg $^ $@
+$(FD_IMG): $(KERNEL_IMG) $(BOOT_IMGS) $(T_MKBOOT)
+	tools/mkfdimg $(KERNEL_IMG) $(FD_IMG)
+	$(T_MKBOOT) $(FD_IMG) $(BOOT_IMGS)
+
+$(HD_IMG): $(KERNEL_IMG) $(BOOT_IMGS) $(T_MKBOOT)
+	tools/mkhdimg $(KERNEL_IMG) $(HD_IMG)
+	$(T_MKBOOT) $(HD_IMG) $(BOOT_IMGS)
+
+tools/%: tools/%.o
+	$(T_LD) $(T_LDFLAGS) -o $@ $^
+
+tools/%.o: tools/%.c
+	$(T_CC) $(T_CFLAGS) -c -o $@ $^
 
 qemu: $(HD_IMG)
-	qemu-system-i386 -cpu 386 -m 2 -hda $(HD_IMG) -monitor stdio -no-shutdown
+	qemu-system-i386 -cpu 486 -m 2 -drive file=$(HD_IMG),index=0,media=disk,format=raw -monitor stdio -no-shutdown
+
+qemu-fd: $(FD_IMG)
+	qemu-system-i386 -cpu 486 -m 2 -drive file=$(FD_IMG),index=0,if=floppy -monitor stdio -no-shutdown
 
 bochs: CFLAGS += -DUSE_BOCHS_E9
 bochs: $(HD_IMG)
 	bochs -f bochsrc
 
 clean:
-	$(RM) $(KERNEL) $(KERNEL).map $(KERNEL_IMG) $(BOOT_IMGS) $(PRELUDE_IMG) $(KOBJECTS) $(HD_IMG)
+	$(RM) $(KERNEL) $(KERNEL).map $(KERNEL_IMG) $(BOOT_IMGS) $(PRELUDE_IMG) $(KOBJECTS) $(FD_IMG) $(HD_IMG) $(T_MKBOOT)

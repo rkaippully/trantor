@@ -54,12 +54,14 @@ after_bpb:
 	movw  %sp, %bp
 
 read_sectors:
-	// Entry at kernel_loc_map is compatible with int 0x13/ah=0x02
+	// Entry at kernel_loc_map is compatible with int 0x13/ah=0x42
 	movb  0(%si), %al
 	cmpb  $0, %al
 	jz    read_complete
 	movw  0(%si), %ax
   movw  %ax, disk_address_packet+2      // Number of blocks
+  movw  %es, %ax
+  movw  %ax, disk_address_packet+6      // Transfer buffer segment
 	movw  2(%si), %ax
 	movw  %ax, disk_address_packet+8      // LBA block number low word
 	movw  4(%si), %ax

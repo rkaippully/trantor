@@ -1,0 +1,32 @@
+#!/bin/bash
+kernel_image=$1
+hd_image=$2
+
+rm -f $hd_image
+dd if=/dev/zero of=$hd_image bs=1024 count=97280
+/sbin/fdisk $hd_image <<EOF
+n
+p
+1
+
+
+t
+6
+a
+p
+u
+p
+w
+EOF
+
+part_dev=`sudo /sbin/losetup --show -f -o 1048576 $hd_image`
+tempdir=tmp
+sudo /sbin/mkfs.fat -v $part_dev
+mkdir -p $tempdir
+sudo mount -t msdos $part_dev $tempdir
+sudo cp $kernel_image $tempdir
+
+sudo umount $part_dev
+rmdir $tempdir
+
+sudo /sbin/losetup -d $part_dev
