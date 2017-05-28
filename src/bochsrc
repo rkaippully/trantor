@@ -7,7 +7,7 @@ ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
 ata0-master: type=disk, path="trantor.hd", mode=flat
 #ata0-slave: type=cdrom, path="/dev/cdrom", status=inserted
 
-cpu: count=1, ips=60000000
+cpu: count=1, ips=2000000
 boot: disk
 vga: extension=vbe
 

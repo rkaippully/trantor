@@ -3,6 +3,7 @@ src/**/*.img
 src/trantor
 src/trantor.map
 src/trantor.sys
+src/trantor.fd
 src/trantor.hd
 src/tools/mkboot
 misc/

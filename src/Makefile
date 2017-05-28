@@ -94,7 +94,7 @@ qemu: $(HD_IMG)
 	qemu-system-i386 -cpu 486 -m 2 -drive file=$(HD_IMG),index=0,media=disk,format=raw -monitor stdio -no-shutdown
 
 qemu-fd: $(FD_IMG)
-	qemu-system-i386 -cpu 486 -m 2 -drive file=$(FD_IMG),index=0,if=floppy -monitor stdio -no-shutdown
+	qemu-system-i386 -cpu 486 -m 2 -drive file=$(FD_IMG),index=0,if=floppy,format=raw -monitor stdio -no-shutdown
 
 bochs: CFLAGS += -DUSE_BOCHS_E9
 bochs: $(HD_IMG)
