@@ -29,7 +29,6 @@ bpb_bytes_per_sec:
   .long  0              // Total logical sectors (32-bit)
 
 ebpb:
-
   .long  0              // Logical sectors per FAT (32-bit)
   .short 0              // Extended flags
   .short 0              // Version number
@@ -46,48 +45,49 @@ ebpb:
 .endm
 
 .macro relocate
-	/*
+  /*
 	  Relocate boot sector/MBR to RELOC_ADDR and jump there
-	*/
+  */
 
-	// Set up stack
-	cli
-	cld
-	xorw  %ax, %ax
-	movw  %ax, %ss
-	movw  $0x7c00, %sp
+  // Set up stack
+  cli
+  cld
+  xorw  %ax, %ax
+  movw  %ax, %ss
+  movw  $0x7c00, %sp
 
-	// We are loaded at some address - most likely 0x7c00 but not all BIOSes do
-	// that. Relocate ourselved to 0x500.
-	pushw %cs
-	popw  %ds
-	call  1f
+  // We are loaded at some address - most likely 0x7c00 but not all BIOSes do
+  // that. Relocate ourselved to 0x500.
+  pushw %cs
+  popw  %ds
+  call  1f
 1:
-	popw  %si
-	subw  $(1b - start), %si    /* ds:si now points to the load address */
-	movw  %ax, %es
-	movw  $RELOC_ADDR, %di      /* es:di = 0x500 (relocation address) */
-	movw  $512, %cx
-	rep movsb %ds:(%si), %es:(%di)
-	ljmp  $0, $1f
+  popw  %si
+  subw  $(1b - start), %si    /* ds:si now points to the load address */
+  movw  %ax, %es
+  movw  $RELOC_ADDR, %di      /* es:di = 0x500 (relocation address) */
+  movw  $512, %cx
+  rep movsb %ds:(%si), %es:(%di)
+  ljmp  $0, $1f
 1:
-	movw  %ax, %ds
+  movw  %ax, %ds
+  sti
 .endm
 
 .macro def_print_msg
   /*
-	  Routine to print an error message to console and halt
-	*/
+    Routine to print an error message to console and halt
+  */
 print_msg:
-	movb  $0x0e, %ah
-	movw  $0x0007, %bx
+  movb  $0x0e, %ah
+  movw  $0x0007, %bx
 1:
-	lodsb %ds:(%si)
-	andb  %al, %al
-	jz    1f
-	int   $0x10
-	jmp   1b
+  lodsb %ds:(%si)
+  andb  %al, %al
+  jz    1f
+  int   $0x10
+  jmp   1b
 1:
-	hlt
-	jmp   1b
+  hlt
+  jmp   1b
 .endm

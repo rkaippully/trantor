@@ -28,9 +28,6 @@ SECTIONS
 
   .kinit.text :
   {
-    /* Put the multiboot section at the begining so that it is within the first 8KB */
-    kinit*(.multiboot)
-
     kinit*(.text)
     kinit*(.text.*)
   }
@@ -78,13 +75,6 @@ SECTIONS
     kernel*(COMMON)
 
     kernel_end = ALIGN(4096);
-  }
-
-  .kernel.postlude :
-  {
-    *(.kernel_postlude)
-
-    kernel_postlude_end = ALIGN(4096);
   }
 
   /* Stuff we don't want in the kernel */
