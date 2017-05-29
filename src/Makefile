@@ -28,7 +28,7 @@ LINKER_SCRIPT := trantor.ld
 
 # Command line flags for the linker
 LIBDIR := $(dir $(shell which $(CC)))../lib/gcc/$(GCC_PREFIX)/$(shell $(CC) -dumpversion)
-LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -L$(LIBDIR) -lgcc
+LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -L$(LIBDIR) -lgcc -s
 
 # How to compile assembly source code
 %.o: %.S

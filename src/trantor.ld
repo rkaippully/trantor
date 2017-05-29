@@ -14,65 +14,37 @@
 OUTPUT_FORMAT("coff-go32")
 
 /* The symbol at which execution starts */
-ENTRY(_start)
+ENTRY(_main)
 
 SECTIONS
 {
   /*
-    The image is loaded at physical address 0x00100000. The kinit sections are
-    located at 0x00100000 in the linear address space. The kernel sections are
-    located at 0xf0000000 in the linear address space.
+    The kernel image is loaded at physical address 0x00100000 and linear address
+    0xc0000000.
   */
-  . = 0x00100000;
-  kinit_start = .;
-
-  .kinit.text :
-  {
-    kinit*(.text)
-    kinit*(.text.*)
-  }
-
-  /* Data section follows text section */
-  .kinit.data :
-  {
-    kinit*(.data)
-    kinit*(.data2)
-    kinit*(.rodata)
-    kinit*(.rodata.*)
-  }
-
-  /* BSS follows the data section */
-  .kinit.bss :
-  {
-    kinit*(.bss)
-    kinit*(COMMON)
-
-    kinit_end = ALIGN(4096);
-  }
-
-  . = 0xf0000000;
+  . = 0xc0000000;
   kernel_start = .;
 
-  .kernel.text : AT(kinit_end)
+  .text : AT(0x00100000)
   {
-    kernel*(.text)
-    kernel*(.text.*)
+    *(.text)
+    *(.text.*)
   }
 
   /* Data section follows text section */
-  .kernel.data :
+  .data :
   {
-    kernel*(.data)
-    kernel*(.data2)
-    kernel*(.rodata)
-    kernel*(.rodata.*)
+    *(.data)
+    *(.data2)
+    *(.rodata)
+    *(.rodata.*)
   }
 
   /* BSS follows the data section */
-  .kernel.bss :
+  .bss :
   {
-    kernel*(.bss)
-    kernel*(COMMON)
+    *(.bss)
+    *(COMMON)
 
     kernel_end = ALIGN(4096);
   }

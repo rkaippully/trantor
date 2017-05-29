@@ -26,5 +26,8 @@ SECTIONS
   {
     *prelude.o(.prelude.16)
     *prelude.o(.prelude.32)
+
+    /* Prelude ends and kernel image starts here */
+    kimg_start = .;
   }
 }
