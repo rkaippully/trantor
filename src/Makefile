@@ -20,7 +20,7 @@ ASFLAGS := -O3 -Wall -I boot
 CC := $(GCC_PREFIX)-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -march=i386 -std=c11 -ffreestanding -Iinclude
+CFLAGS := -O3 -Wall -march=i386 -std=c11 -ffreestanding -nostdinc -Iinclude
 
 # Always use ld for linking
 LD := $(GCC_PREFIX)-ld
