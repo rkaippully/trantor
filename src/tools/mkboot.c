@@ -253,10 +253,10 @@ static uint32_t get_fat_entry(void* fat, FATType type, uint32_t idx)
   switch(type) {
   case FAT12:
     lv = fat + idx*3/2;
-    if (idx/2)
-      return *lv & 0xfff;
-    else
+    if (idx % 2)
       return (*lv >> 4) & 0xfff;
+    else
+      return *lv & 0xfff;
   case FAT16:
     sv = fat;
     return sv[idx];
@@ -282,6 +282,7 @@ static struct tbh_lba_entry* next_lba_run(struct bpb* bpb, void* fat, FATType ty
   uint32_t cnt = 0;
   uint32_t p = lba_run_idx;
   while(1) {
+    printf("FAT index=0x%x\n", p);
     if (is_end_of_chain(p, type))
       break;
 
@@ -303,6 +304,7 @@ static struct tbh_lba_entry* next_lba_run(struct bpb* bpb, void* fat, FATType ty
   entry.start = boot_sec_offset/bpb->bytes_per_sec + bpb->reserved_secs + bpb->num_fats*fat_secs +
     root_dir_secs + (idx - 2)*bpb->secs_per_cluster;
   entry.count = cnt * bpb->secs_per_cluster;
+  printf("LBA entry: start=0x%x, count=0x%x\n", entry.start, entry.count);
   return &entry;
 }
 
@@ -328,6 +330,7 @@ static struct tbh_chs_entry* next_chs_run(struct bpb* bpb, struct tbh_lba_entry*
     lba.count -= entry.count;
     lba.start += entry.count;
 
+    printf("CHS entry: count=0x%x, sector=0x%x, cylinder=0x%x, head=0x%x\n", entry.count, entry.sector, entry.cylinder, entry.head);
     return &entry;
   }
 }
