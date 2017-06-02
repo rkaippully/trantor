@@ -23,7 +23,7 @@ SECTIONS
     0xc0000000.
   */
   . = 0xc0000000;
-  kernel_start = .;
+  _kernel_start = .;
 
   .text : AT(0x00100000)
   {
@@ -46,8 +46,17 @@ SECTIONS
     *(.bss)
     *(COMMON)
 
-    kernel_end = ALIGN(4096);
+    . = ALIGN(4096);
+    _kernel_end = .;
+
+    /*
+      Bitmap for physical memory manager. This must be located at the very end
+      of the kernel image in memory.
+     */
+    _pmm_bitmap = .;
+    . += 128*1024;
   }
+
 
   /* Stuff we don't want in the kernel */
   /DISCARD/ :

@@ -20,7 +20,7 @@ ASFLAGS := -O3 -Wall -I boot
 CC := $(GCC_PREFIX)-gcc
 
 # Command line flags for the compiler
-CFLAGS := -O3 -Wall -march=i386 -std=c11 -ffreestanding -nostdinc -Iinclude
+CFLAGS := -O3 -Wall -march=i386 -std=c11 -ffreestanding -nostdinc -Iinclude -DUSE_E9_DEBUG
 
 # Always use ld for linking
 LD := $(GCC_PREFIX)-ld
@@ -47,7 +47,7 @@ BOOT_IMGS   := boot/bootchs.img boot/bootlba.img boot/mbr.img
 PRELUDE_IMG := boot/prelude.img
 
 # Kernel is composed of these object files
-KOBJECTS := kernel/main.o kernel/kprintf.o
+KOBJECTS := kernel/boot/meminit.o kernel/main.o kernel/pmm.o kernel/kprintf.o
 
 boot/%.img: boot/%.o
 	$(LD) $(LDFLAGS) -T trantor-boot.ld -o $@ $^
@@ -90,7 +90,6 @@ tools/%: tools/%.o
 tools/%.o: tools/%.c
 	$(T_CC) $(T_CFLAGS) -c -o $@ $^
 
-qemu: CFLAGS+=-DUSE_E9_DEBUG
 qemu: $(HD_IMG)
 	qemu-system-i386 -cpu 486 -m 2 -drive file=$(HD_IMG),index=0,media=disk,format=raw -monitor stdio -no-shutdown -debugcon file:/dev/stdout
 
@@ -98,7 +97,6 @@ qemu-fd: CFLAGS+=-DUSE_E9_DEBUG
 qemu-fd: $(FD_IMG)
 	qemu-system-i386 -cpu 486 -m 2 -drive file=$(FD_IMG),index=0,if=floppy,format=raw -monitor stdio -no-shutdown -debugcon file:/dev/stdout
 
-bochs: CFLAGS+=-DUSE_E9_DEBUG
 bochs: $(HD_IMG)
 	bochs -f bochsrc.hd
 

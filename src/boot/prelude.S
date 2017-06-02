@@ -19,7 +19,7 @@
 /*
 	The memory map is stored at 0x504. Each entry has base address (64 bit),
   length (64 bit), and type (32 bit). We assume a maximum of 25 such entries.
-	The total length of mmap in bytes is stored at 0x500 (32 bit).
+	The number of mmap entries is stored at 0x500 (32 bit).
 */
 .equ MMAP_COUNT, 0x500
 .equ MMAP_START, 0x504
@@ -64,8 +64,13 @@ next_mmap:
   jne   mem_detect_fail
   cmpl  $0, %ebx
   jne   1f
+  // We reached end of mmap
   subw  $(MMAP_START - MMAP_STRUCT_SIZE), %di
-  movl  %edi, MMAP_COUNT
+  movw  %di, %ax
+  movb  $MMAP_STRUCT_SIZE, %cl
+  divb  %cl
+  andl  $0xff, %eax
+  movl  %eax, MMAP_COUNT
   jmp   2f
 1:
   addw  $MMAP_STRUCT_SIZE, %di

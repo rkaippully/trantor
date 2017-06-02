@@ -4,8 +4,6 @@
   Copyright (C) 2017 Raghu Kaippully
 */
 
-int i = 10;
-
 #include "stdint.h"
 #include "debug.h"
 
@@ -29,9 +27,9 @@ int main()
 
   kdebug("Booting Trantor OS...\n");
 
-  unsigned short* ptr = (unsigned short*)0xbffb8000;
-  for (int i = 0; i < 80*25 - 1; i++)
-    *ptr++ = 0x7145;
+  extern void init_memory();
+
+  init_memory();
 
   for(;;);
 }
