@@ -29,16 +29,42 @@ static void print_mmap(uint32_t count)
   }
 }
 
-static void sort_mmap(uint32_t count)
+static uint32_t page_align_up(uint32_t addr)
 {
-  // Sort the mmap entries in the increasing order of base address
+  return ((addr + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+}
+
+static uint32_t page_align_down(uint32_t addr)
+{
+  return (addr / PAGE_SIZE) * PAGE_SIZE;
+}
+
+static void sanitize_mmap(uint32_t count)
+{
+  // Adjust base and length to align them to page boundary
+  for (int i = 0; i < count; i++) {
+    uint64_t start = mmap[i].base;
+    uint64_t end = mmap[i].base + mmap[i].length;
+    if (mmap[i].type == 1) {
+      mmap[i].base = page_align_up(start);
+      mmap[i].length = page_align_down(end) - mmap[i].base;
+    } else {
+      mmap[i].base = page_align_down(start);
+      mmap[i].length = page_align_up(end) - mmap[i].base;
+    }
+  }
+
+  // Sort the mmap entries in the increasing order of base address, and then
+  // length.
   for (int i = 1; i < count; i++) {
-    int j = i;
-    while (j > 0 && mmap[j - 1].base > mmap[j].base) {
-      mmap_entry tmp = mmap[j - 1];
-      mmap[j - 1] = mmap[j];
-      mmap[j] = tmp;
-      j--;
+    for (int j = i; j > 0; j--) {
+      if (mmap[j - 1].base > mmap[j].base ||
+          (mmap[j - 1].base == mmap[j].base && mmap[j - 1].length > mmap[j].length)) {
+        mmap_entry tmp = mmap[j - 1];
+        mmap[j - 1] = mmap[j];
+        mmap[j] = tmp;
+      } else
+        break;
     }
   }
 }
@@ -59,16 +85,6 @@ static uint32_t filter_long_memory(uint32_t count)
   return count;
 }
 
-static uint32_t page_align_up(uint32_t addr)
-{
-  return ((addr + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-}
-
-static uint32_t page_align_down(uint32_t addr)
-{
-  return (addr / PAGE_SIZE) * PAGE_SIZE;
-}
-
 static uint32_t merge_mmap_entries(uint32_t count)
 {
   uint32_t total_mem = 0;
@@ -76,8 +92,8 @@ static uint32_t merge_mmap_entries(uint32_t count)
     if (mmap[i].type != 1)
       continue;
 
-    uint32_t start = page_align_up(mmap[i].base),
-      end = page_align_down(mmap[i].base + mmap[i].length);
+    uint32_t start = mmap[i].base,
+      end = mmap[i].base + mmap[i].length;
     // The first page is reserved for IVT, BDA etc
     if (start == 0)
       start = PAGE_SIZE;
@@ -85,8 +101,8 @@ static uint32_t merge_mmap_entries(uint32_t count)
     // There could be overlapping regions of memory in the mmap, check the next
     // mmap entries
     for (int j = i + 1; j < count; j++) {
-      uint32_t n_start = page_align_up(mmap[j].base),
-        n_end = page_align_down(mmap[j].base + mmap[j].length);
+      uint32_t n_start = mmap[j].base,
+        n_end = mmap[j].base + mmap[j].length;
 
       // Case 1: There is no overlap
       if (n_start >= end)
@@ -98,6 +114,14 @@ static uint32_t merge_mmap_entries(uint32_t count)
           mmap[j].type = 0xff;
         } else {
           // There is a hole in mmap[i]
+          //
+          // If j does not end at i's end, we need a new usable mementry
+          // from j's end to i's end
+          if (n_end < end) {
+            mmap[j].base = n_end;
+            mmap[j].length = end - n_end;
+            mmap[j].type = 1;
+          }
           end = n_start;
         }
       }
@@ -147,17 +171,18 @@ static void create_pmm_stack(uint32_t count, uint32_t total_mem)
   /* One page of bitmap represents 32768 pages. */
   uint32_t bitmap_pages = free_mem_pages / 32769 + 1;
   uint32_t available_mem_pages = free_mem_pages - bitmap_pages;
-  uint32_t bitmap_size = (available_mem_pages + 7) / 8;  // Size in bytes
-  kdebug("bitmap page count = %d, available page count = %d, bitmap size = %d bytes\n",
-         bitmap_pages, available_mem_pages, bitmap_size);
+  kdebug("bitmap page count = %d, available page count = %d\n",
+         bitmap_pages, available_mem_pages);
 
-  // Mark all memory as available
+  uint32_t max_mem = 0;
+  // Mark all type 1 memory as available
   uint8_t* p = &pmm_bitmap;
   for (int i = 0; i < count; i++) {
     if (mmap[i].type != 1)
       continue;
 
-    for (uint32_t page = mmap[i].base; page < mmap[i].base - 1 + mmap[i].length; page += PAGE_SIZE) {
+    max_mem = mmap[i].base + mmap[i].length;
+    for (uint32_t page = mmap[i].base; page < mmap[i].base + mmap[i].length; page += PAGE_SIZE) {
       uint32_t n = page / PAGE_SIZE;
       p[n/8] |= 1 << (n % 8);
     }
@@ -177,12 +202,14 @@ static void create_pmm_stack(uint32_t count, uint32_t total_mem)
     p[n/8] &= ~((uint8_t)1 << (n % 8));
   }
 
+  uint32_t bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
   kdebug("PMM bitmap:\n");
-  for (int i = 0; i < bitmap_size; i++) {
+  for (int i = 0; i*8 < bitmap_size; i++) {
     kdebug("%02x ", p[i]);
     if ((i % 16) == 15)
       kdebug("\n");
   }
+  kdebug("\n");
 }
 
 void init_memory()
@@ -191,7 +218,7 @@ void init_memory()
 
   print_mmap(count);
 
-  sort_mmap(count);
+  sanitize_mmap(count);
   count = filter_long_memory(count);
   uint32_t total_mem = merge_mmap_entries(count);
   create_pmm_stack(count, total_mem);
