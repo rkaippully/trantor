@@ -29,12 +29,12 @@ static void print_mmap(uint32_t count)
   }
 }
 
-static uint32_t page_align_up(uint32_t addr)
+static uint64_t page_align_up(uint64_t addr)
 {
   return ((addr + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 }
 
-static uint32_t page_align_down(uint32_t addr)
+static uint64_t page_align_down(uint64_t addr)
 {
   return (addr / PAGE_SIZE) * PAGE_SIZE;
 }
@@ -82,12 +82,13 @@ static uint32_t filter_long_memory(uint32_t count)
     if (end > 0x100000000)
       mmap[i].length = 0x100000000 - mmap[i].base;
   }
+
   return count;
 }
 
 static uint32_t merge_mmap_entries(uint32_t count)
 {
-  uint32_t total_mem = 0;
+  uint32_t total_mem = 0, max_mem = 0;
   for (int i = 0; i < count; i++) {
     if (mmap[i].type != 1)
       continue;
@@ -115,7 +116,7 @@ static uint32_t merge_mmap_entries(uint32_t count)
         } else {
           // There is a hole in mmap[i]
           //
-          // If j does not end at i's end, we need a new usable mementry
+          // If j does not end at i's end, we need a new usable mmap entry
           // from j's end to i's end
           if (n_end < end) {
             mmap[j].base = n_end;
@@ -139,14 +140,16 @@ static uint32_t merge_mmap_entries(uint32_t count)
     }
 
     total_mem += end - start;
+    max_mem = end;
     mmap[i].base = start;
     mmap[i].length = end - start;
     kdebug("Usable memory: base=0x%08x, length=0x%08x, type=%d\n",
            (uint32_t)mmap[i].base, (uint32_t)mmap[i].length, mmap[i].type);
   }
-  kdebug("Usable memory: 0x%08x bytes\n", total_mem);
 
-  return total_mem;
+  kdebug("Usable memory: 0x%08x bytes, max memory: 0x%08x\n", total_mem, max_mem);
+
+  return max_mem;
 }
 
 // Convert a linear address to physical address
@@ -155,33 +158,30 @@ static uint32_t linear_to_physical(uint32_t addr)
   return addr + 0x40100000;
 }
 
-static void create_pmm_stack(uint32_t count, uint32_t total_mem)
+static void create_pmm_stack(uint32_t count, uint32_t max_mem)
 {
   // Defined in the linker script
   extern uint8_t kernel_start, kernel_end;
+
+  uint32_t kernel_size = &kernel_end - &kernel_start;
+  kdebug("Kernel size = %d bytes\n", kernel_size);
 
   /*
     We create a bitmap of the free pages. Each set bit in the bitmap represents
     one free page of physical address space.
   */
-  uint32_t kernel_size = &kernel_end - &kernel_start;
-  uint32_t free_mem_pages = (total_mem - kernel_size) / PAGE_SIZE;
-  kdebug("kernel size = %d bytes, free mem page count = %d\n", kernel_size, free_mem_pages);
+  uint32_t bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
 
   /* One page of bitmap represents 32768 pages. */
-  uint32_t bitmap_pages = free_mem_pages / 32769 + 1;
-  uint32_t available_mem_pages = free_mem_pages - bitmap_pages;
-  kdebug("bitmap page count = %d, available page count = %d\n",
-         bitmap_pages, available_mem_pages);
+  uint32_t bitmap_pages = bitmap_size / 32768 + 1;
+  kdebug("bitmap page count = %d\n", bitmap_pages);
 
-  uint32_t max_mem = 0;
   // Mark all type 1 memory as available
   uint8_t* p = &pmm_bitmap;
   for (int i = 0; i < count; i++) {
     if (mmap[i].type != 1)
       continue;
 
-    max_mem = mmap[i].base + mmap[i].length;
     for (uint32_t page = mmap[i].base; page < mmap[i].base + mmap[i].length; page += PAGE_SIZE) {
       uint32_t n = page / PAGE_SIZE;
       p[n/8] |= 1 << (n % 8);
@@ -202,11 +202,12 @@ static void create_pmm_stack(uint32_t count, uint32_t total_mem)
     p[n/8] &= ~((uint8_t)1 << (n % 8));
   }
 
-  uint32_t bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
   kdebug("PMM bitmap:\n");
   for (int i = 0; i*8 < bitmap_size; i++) {
+    if ((i % 32) == 0)
+      kdebug("%05x: ", i);
     kdebug("%02x ", p[i]);
-    if ((i % 16) == 15)
+    if ((i % 32) == 31)
       kdebug("\n");
   }
   kdebug("\n");
@@ -220,6 +221,6 @@ void init_memory()
 
   sanitize_mmap(count);
   count = filter_long_memory(count);
-  uint32_t total_mem = merge_mmap_entries(count);
-  create_pmm_stack(count, total_mem);
+  uint32_t max_mem = merge_mmap_entries(count);
+  create_pmm_stack(count, max_mem);
 }
