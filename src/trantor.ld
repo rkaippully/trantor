@@ -20,9 +20,9 @@ SECTIONS
 {
   /*
     The kernel image is loaded at physical address 0x00100000 and linear address
-    0xc0000000.
+    0xc0100000.
   */
-  . = 0xc0000000;
+  . = 0xc0100000;
   _kernel_start = .;
 
   .text : AT(0x00100000)

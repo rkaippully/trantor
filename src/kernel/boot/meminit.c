@@ -6,7 +6,11 @@
 
 #include "stdint.h"
 #include "debug.h"
+#include "asm.h"
 #include "pmm.h"
+
+// Defined in the linker script
+extern uint8_t kernel_start, kernel_end;
 
 typedef struct {
   uint64_t base;
@@ -14,8 +18,9 @@ typedef struct {
   uint32_t type;
 } __attribute__((packed)) mmap_entry;
 
-static uint32_t* mmap_entry_count = (uint32_t*)0xbff00500;  // Physical address 0x500
-static mmap_entry* mmap = (mmap_entry*)0xbff00504;          // Physical address 0x504
+static mmap_entry* mmap;
+
+static uint32_t bitmap_pages;
 
 static void print_mmap(uint32_t count)
 {
@@ -153,14 +158,17 @@ static uint32_t merge_mmap_entries(uint32_t count)
 // Convert a linear address to physical address
 static uint32_t linear_to_physical(uint32_t addr)
 {
-  return addr + 0x40100000;
+  return addr + 0x40000000;
+}
+
+// Convert a physical address to linear address
+static uint32_t physical_to_linear(uint32_t addr)
+{
+  return addr - 0x40000000;
 }
 
 static void create_pmm_stack(uint32_t count, uint32_t max_mem)
 {
-  // Defined in the linker script
-  extern uint8_t kernel_start, kernel_end;
-
   uint32_t kernel_size = &kernel_end - &kernel_start;
   kdebug("Kernel size = %d bytes\n", kernel_size);
 
@@ -171,7 +179,7 @@ static void create_pmm_stack(uint32_t count, uint32_t max_mem)
   bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
 
   /* One page of bitmap represents 32768 pages. */
-  uint32_t bitmap_pages = bitmap_size / 32768 + 1;
+  bitmap_pages = bitmap_size / 32768 + 1;
   kdebug("bitmap page count = %d\n", bitmap_pages);
 
   // Mark all type 1 memory as available
@@ -217,6 +225,9 @@ static void create_pmm_stack(uint32_t count, uint32_t max_mem)
 // Initialize physical memory manager
 static void init_pmm()
 {
+  uint32_t* mmap_entry_count = (uint32_t*)physical_to_linear(0x500);
+  mmap = (mmap_entry*)physical_to_linear(0x504);
+
   uint32_t count = *mmap_entry_count;
 
   print_mmap(count);
@@ -227,9 +238,70 @@ static void init_pmm()
   create_pmm_stack(count, max_mem);
 }
 
+static void init_paging()
+{
+  uint32_t kernel_size = &kernel_end - &kernel_start;
+  uint32_t kernel_page_count = (kernel_size + PAGE_SIZE - 1)/PAGE_SIZE + bitmap_pages;
+
+  // Kernel is loaded at 1 MB and should not exceed 4 MB
+  if (kernel_page_count > 768) {
+    kdebug("Kernel is too large, needs %d pages.\n");
+    halt();
+  }
+
+  uint32_t page_dir_addr = pmm_alloc();
+  if (page_dir_addr == 0) {
+    kdebug("Could not allocate a physical page for page directory.\n");
+    halt();
+  }
+  uint32_t page_tbl_addr = pmm_alloc();
+  if (page_tbl_addr == 0) {
+    kdebug("Could not allocate a physical page for page table.\n");
+    halt();
+  }
+
+  uint32_t* pd_ptr = (uint32_t*)physical_to_linear(page_dir_addr);
+  uint32_t* pt_ptr = (uint32_t*)physical_to_linear(page_tbl_addr);
+
+  // Lower physical memory of 1 MB + kernel is mapped to 0x00000000 and 0xc0000000
+  pd_ptr[0] = pd_ptr[0x300] = page_tbl_addr | 3;
+  for (int i = 0; i < 256 + kernel_page_count; i++)
+    pt_ptr[i] = (i * PAGE_SIZE) | 3;
+
+  // Turn on paging
+  uint32_t tmp1;
+  __asm__ volatile(
+    "movl  %1, %%cr3  ;"
+    "movl  %%cr0, %0  ;"
+    "btsl  $31, %0    ;"
+    "movl  %0, %%cr0  ;"
+    : "=r"(tmp1)
+    : "r"(page_dir_addr));
+
+  // Load new segments
+  uint16_t tmp2;
+  __asm__ volatile(
+    "lgdtl  %1          ;"
+    "ljmp   $0x08, $1f  ;"
+    "1:                  "
+    "movw   $0x10, %0   ;"
+    "movw   %0, %%ds    ;"
+    "movw   %0, %%es    ;"
+    "movw   %0, %%fs    ;"
+    "movw   %0, %%gs    ;"
+    "movw   %0, %%ss    ;"
+    : "=r"(tmp2)
+    : "m"(gdt_descriptor));
+
+  // Remove the identity mapping and reload cr3
+  pd_ptr[0] = 0;
+  __asm__ volatile("movl  %0, %%cr3" : : "r"(page_dir_addr));
+}
+
 // Initialize virtual memory manager
 static void init_vmm()
 {
+  init_paging();
 }
 
 void init_memory()

@@ -37,4 +37,14 @@ extern uint32_t pmm_alloc();
 */
 extern void pmm_free(uint32_t addr);
 
+typedef uint64_t __attribute__((aligned(8))) GDTEntry;
+
+typedef struct {
+  uint16_t limit;
+  GDTEntry* base;
+} __attribute__((packed)) GDTDescriptor;
+
+extern GDTDescriptor gdt_descriptor;
+extern GDTEntry gdt[];
+
 #endif

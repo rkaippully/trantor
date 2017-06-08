@@ -19,6 +19,14 @@ static inline void cli()
   __asm__ volatile("cli");
 }
 
+static inline void halt()
+{
+  __asm__ volatile(
+    "1:       "
+    "hlt     ;"
+    "jmp  1b ;");
+}
+
 static inline uint8_t inb(uint16_t port)
 {
   uint8_t ret;

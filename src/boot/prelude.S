@@ -28,8 +28,8 @@
 
 /*
   There are two sets of selectors. The first two have a base address of 0. The
-  next two have a base address of 0x40100000, so any linear address above
-  0xc0000000 will wrap around to 0x00100000 (1 MB).
+  next two have a base address of 0x40000000, so any linear address above
+  0xc0000000 will wrap around to 0x00000000.
 */
 .equ CODE_SEL,      0x0008
 .equ DATA_SEL,      0x0010
@@ -117,8 +117,8 @@ gdt:
   .quad 0x0000000000000000
   .quad 0x00cf9a000000ffff      // 4 GB code segment, base = 0x00000000
   .quad 0x00cf92000000ffff      // 4 GB data segment, base = 0x00000000
-  .quad 0x40cf9a100000ffff      // 4 GB code segment, base = 0x40100000
-  .quad 0x40cf92100000ffff      // 4 GB data segment, base = 0x40100000
+  .quad 0x40cf9a000000ffff      // 4 GB code segment, base = 0x40000000
+  .quad 0x40cf92000000ffff      // 4 GB data segment, base = 0x40000000
 gdt_end:
 
 
