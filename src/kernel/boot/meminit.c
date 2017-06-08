@@ -8,8 +8,6 @@
 #include "debug.h"
 #include "pmm.h"
 
-static const uint32_t PAGE_SIZE = 4096;
-
 typedef struct {
   uint64_t base;
   uint64_t length;
@@ -170,50 +168,54 @@ static void create_pmm_stack(uint32_t count, uint32_t max_mem)
     We create a bitmap of the free pages. Each set bit in the bitmap represents
     one free page of physical address space.
   */
-  uint32_t bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
+  bitmap_size = max_mem / PAGE_SIZE;  // Size in bits
 
   /* One page of bitmap represents 32768 pages. */
   uint32_t bitmap_pages = bitmap_size / 32768 + 1;
   kdebug("bitmap page count = %d\n", bitmap_pages);
 
   // Mark all type 1 memory as available
-  uint8_t* p = &pmm_bitmap;
+  uint32_t* p = &pmm_bitmap;
   for (int i = 0; i < count; i++) {
     if (mmap[i].type != 1)
       continue;
 
     for (uint32_t page = mmap[i].base; page < mmap[i].base + mmap[i].length; page += PAGE_SIZE) {
       uint32_t n = page / PAGE_SIZE;
-      p[n/8] |= 1 << (n % 8);
+      p[n/32] |= 1 << (n % 32);
     }
   }
 
   // Mark IVT, BDA as unavailable
-  p[0] &= 0xfe;
+  p[0] &= 0xfffffffe;
 
   // Mark kernel as unavailable
   for (uint32_t page = (uint32_t)&kernel_start; page < (uint32_t)&kernel_end; page += PAGE_SIZE) {
     uint32_t n = linear_to_physical(page) / PAGE_SIZE;
-    p[n/8] &= ~((uint8_t)1 << (n % 8));
+    p[n/32] &= ~(1 << (n % 32));
   }
   // Mark bitmap pages as unavailable
   for (uint32_t page = (uint32_t)p; page < (uint32_t)p + bitmap_pages*PAGE_SIZE; page += PAGE_SIZE) {
     uint32_t n = linear_to_physical(page) / PAGE_SIZE;
-    p[n/8] &= ~((uint8_t)1 << (n % 8));
+    p[n/32] &= ~(1 << (n % 32));
   }
 
   kdebug("PMM bitmap:\n");
-  for (int i = 0; i*8 < bitmap_size; i++) {
-    if ((i % 32) == 0)
+  for (int i = 0; i*32 < bitmap_size; i++) {
+    if ((i % 8) == 0)
       kdebug("%05x: ", i);
-    kdebug("%02x ", p[i]);
-    if ((i % 32) == 31)
+    kdebug("%02x ", (uint8_t)p[i]);
+    kdebug("%02x ", (uint8_t)(p[i] >> 8));
+    kdebug("%02x ", (uint8_t)(p[i] >> 16));
+    kdebug("%02x ", (uint8_t)(p[i] >> 24));
+    if ((i % 8) == 7)
       kdebug("\n");
   }
   kdebug("\n");
 }
 
-void init_memory()
+// Initialize physical memory manager
+static void init_pmm()
 {
   uint32_t count = *mmap_entry_count;
 
@@ -223,4 +225,15 @@ void init_memory()
   count = filter_long_memory(count);
   uint32_t max_mem = merge_mmap_entries(count);
   create_pmm_stack(count, max_mem);
+}
+
+// Initialize virtual memory manager
+static void init_vmm()
+{
+}
+
+void init_memory()
+{
+  init_pmm();
+  init_vmm();
 }

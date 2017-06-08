@@ -19,6 +19,22 @@
 
 #include "stdint.h"
 
-extern uint8_t pmm_bitmap;
+static const uint32_t PAGE_SIZE = 4096;
+
+extern uint32_t pmm_bitmap;
+
+// Size of the PMM bitmap in bits
+extern uint32_t bitmap_size;
+
+/*
+  Allocate a physical page. Returns the base address of the page or zero if
+  allocation fails.
+*/
+extern uint32_t pmm_alloc();
+
+/*
+  Frees a previously allocated physical page
+*/
+extern void pmm_free(uint32_t addr);
 
 #endif

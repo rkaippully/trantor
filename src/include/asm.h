@@ -60,4 +60,9 @@ static inline void release_mutex(mutex_t* m)
   __asm__ volatile("movl  $0, %0" : "=m"(*m));
 }
 
+static inline uint32_t bsf(uint32_t v)
+{
+  return __builtin_ffs(v);
+}
+
 #endif
