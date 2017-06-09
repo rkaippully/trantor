@@ -5,7 +5,7 @@
 */
 
 #include "stdint.h"
-#include "debug.h"
+#include "printf.h"
 #include "asm.h"
 #include "pmm.h"
 
@@ -151,6 +151,7 @@ static uint32_t merge_mmap_entries(uint32_t count)
   }
 
   kdebug("Usable memory: 0x%08x bytes, max memory: 0x%08x\n", total_mem, max_mem);
+  cprintf("Usable memory: %d KB\n", total_mem/1024);
 
   return max_mem;
 }

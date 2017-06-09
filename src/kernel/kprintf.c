@@ -7,8 +7,7 @@
 #include "stdint.h"
 #include "stdarg.h"
 #include "asm.h"
-
-static const int MAX_BUF_SIZE = 512;
+#include "printf.h"
 
 static inline int isdigit(char c)
 {
@@ -18,7 +17,8 @@ static inline int isdigit(char c)
 /*
     A very simple implementation. Use with care.
 */
-static void _sprintf(char* buf, const char* fmt, va_list args) {
+void sprintf(char* buf, const char* fmt, va_list args)
+{
   uint32_t unumber, i, idx = 0;
   int32_t number;
   char* s;
@@ -99,7 +99,7 @@ void kdebug(const char* format, ...)
   va_list ap;
 
   va_start(ap, format);
-  _sprintf(buf, format, ap);
+  sprintf(buf, format, ap);
   va_end(ap);
 
   for(int i = 0; i < MAX_BUF_SIZE && buf[i]; i++)

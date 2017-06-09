@@ -11,7 +11,7 @@
 uint32_t bitmap_size;
 
 // Index at which we start searching for free mem
-static uint32_t bitmap_idx = 1;
+static uint32_t bitmap_idx = 0;
 
 uint32_t pmm_alloc()
 {
