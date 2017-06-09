@@ -268,6 +268,9 @@ static void init_paging()
   for (int i = 0; i < 256 + kernel_page_count; i++)
     pt_ptr[i] = (i * PAGE_SIZE) | 3;
 
+  // Create a self mapping for the PD
+  pd_ptr[0x3ff] = page_dir_addr | 3;
+
   // Turn on paging
   uint32_t tmp1;
   __asm__ volatile(

@@ -15,7 +15,7 @@
 
   PMM stores information about the availability of physical memory in a bitmap
   located at 0xc8000000. Each set bit in the bitmap indicates a free page.
- */
+*/
 
 #include "stdint.h"
 
