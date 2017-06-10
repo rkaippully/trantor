@@ -17,7 +17,7 @@ static inline int isdigit(char c)
 /*
     A very simple implementation. Use with care.
 */
-void sprintf(char* buf, const char* fmt, va_list args)
+void vsprintf(char* buf, const char* fmt, va_list args)
 {
   uint32_t unumber, i, idx = 0;
   int32_t number;
@@ -89,6 +89,15 @@ void sprintf(char* buf, const char* fmt, va_list args)
   buf[idx] = '\0';
 }
 
+void sprintf(char* buf, const char* format, ...)
+{
+  va_list ap;
+
+  va_start(ap, format);
+  vsprintf(buf, format, ap);
+  va_end(ap);
+}
+
 #ifdef USE_E9_DEBUG
 /*
     Writes to port 0xe9 - for bochs/qemu debug hack
@@ -99,7 +108,7 @@ void kdebug(const char* format, ...)
   va_list ap;
 
   va_start(ap, format);
-  sprintf(buf, format, ap);
+  vsprintf(buf, format, ap);
   va_end(ap);
 
   for(int i = 0; i < MAX_BUF_SIZE && buf[i]; i++)

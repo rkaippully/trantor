@@ -6,7 +6,6 @@
 
 #include "stdint.h"
 #include "printf.h"
-#include "version.h"
 #include "asm.h"
 
 uint8_t kernel_stack[4096];
@@ -18,7 +17,6 @@ void kmain()
   extern void init_console(), init_memory(), init_interrupts();
 
   init_console();
-  cprintf("Welcome to Trantor OS v%d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 
   init_memory();
   init_interrupts();

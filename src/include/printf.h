@@ -17,7 +17,8 @@ extern void kdebug(const char* format, ...);
 #define kdebug(format, ...)
 #endif
 
-extern void sprintf(char* buf, const char* fmt, va_list args);
+extern void vsprintf(char* buf, const char* fmt, va_list args);
+extern void sprintf(char* buf, const char* fmt, ...);
 extern void cprintf(const char* format, ...);
 
 #endif

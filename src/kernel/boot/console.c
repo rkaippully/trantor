@@ -13,6 +13,7 @@
 #include "asm.h"
 #include "stdarg.h"
 #include "printf.h"
+#include "version.h"
 
 static uint8_t* VMEMBASE = (uint8_t*)0xc00b8000;
 static int cursor_pos;
@@ -29,17 +30,33 @@ static void update_cursor()
 
 void init_console()
 {
+  char header[80];
+  sprintf(header, "Trantor OS %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+  int len = 0;
+  while (len < 80 && header[len])
+    len++;
+
   uint16_t* p = (uint16_t*)VMEMBASE;
-  for (int i = 0; i < 80*25; i++)
+  int i = 0;
+
+  for (; i < (80 - len)/2; i++)
+    p[i] = 0x1f20;
+  for (int j = 0; j < len; i++, j++)
+    p[i] = 0x1f00 | header[j];
+  for (; i < 80; i++)
+    p[i] = 0x1f20;
+
+  for (; i < 80*25; i++)
     p[i] = 0x0720;
-  cursor_pos = 0;
+
+  cursor_pos = 80;
   update_cursor();
 }
 
 static void scroll_up_if_needed()
 {
   if (cursor_pos == 80*25) {
-    for (int i = 0; i < 80*24*2; i++)
+    for (int i = 80; i < 80*24*2; i++)
       VMEMBASE[i] = VMEMBASE[i+80*2];
     uint16_t* p = ((uint16_t*)VMEMBASE) + 80*24;
     for (int i = 0; i < 80; i++)
@@ -91,7 +108,7 @@ void cprintf(const char* format, ...)
   va_list ap;
 
   va_start(ap, format);
-  sprintf(buf, format, ap);
+  vsprintf(buf, format, ap);
   va_end(ap);
 
   for(int i = 0; i < MAX_BUF_SIZE && buf[i]; i++)

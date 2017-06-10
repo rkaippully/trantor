@@ -226,6 +226,8 @@ static void create_pmm_stack(uint32_t count, uint32_t max_mem)
 // Initialize physical memory manager
 static void init_pmm()
 {
+  cprintf("Detecting memory...\n");
+
   uint32_t* mmap_entry_count = (uint32_t*)physical_to_linear(0x500);
   mmap = (mmap_entry*)physical_to_linear(0x504);
 
