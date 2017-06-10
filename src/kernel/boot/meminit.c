@@ -286,16 +286,16 @@ static void init_paging()
   uint16_t tmp2;
   __asm__ volatile(
     "lgdtl  %1          ;"
-    "ljmp   $0x08, $1f  ;"
+    "ljmp   %2, $1f     ;"
     "1:                  "
-    "movw   $0x10, %0   ;"
+    "movw   %3, %0      ;"
     "movw   %0, %%ds    ;"
     "movw   %0, %%es    ;"
     "movw   %0, %%fs    ;"
     "movw   %0, %%gs    ;"
     "movw   %0, %%ss    ;"
     : "=r"(tmp2)
-    : "m"(gdt_descriptor));
+    : "m"(gdt_descriptor), "i"(KERNEL_CS), "i"(KERNEL_DS));
 
   // Remove the identity mapping and reload cr3
   pd_ptr[0] = 0;

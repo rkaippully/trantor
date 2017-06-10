@@ -9,6 +9,13 @@
 
 #include "stdint.h"
 
+/* Well known segment selectors */
+#define KERNEL_CS    0x0008
+#define KERNEL_DS    0x0010
+#define USER_CS      0x001b
+#define USER_DS      0x0023
+#define TSS_SELECTOR 0x0028
+
 static inline void sti()
 {
   __asm__ volatile("sti");

@@ -7,6 +7,7 @@
 #include "stdint.h"
 #include "printf.h"
 #include "version.h"
+#include "asm.h"
 
 uint8_t kernel_stack[4096];
 
@@ -14,14 +15,15 @@ void kmain()
 {
   kdebug("Booting Trantor OS...\n");
 
-  extern void init_console(), init_memory();
+  extern void init_console(), init_memory(), init_interrupts();
 
   init_console();
   cprintf("Welcome to Trantor OS v%d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 
   init_memory();
+  init_interrupts();
 
-  for(;;);
+  halt();
 }
 
 // This cannot be a C function because stack is not setup yet

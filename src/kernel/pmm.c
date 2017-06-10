@@ -48,8 +48,8 @@ void pmm_free(uint32_t addr)
 
 GDTEntry gdt[3] = {
   0x0000000000000000,
-  0x00cf9a000000ffff,      // 4 GB code segment, base = 0x00000000
-  0x00cf92000000ffff,      // 4 GB data segment, base = 0x00000000
+  0x00cf9a000000ffff,      // 4 GB code segment, base = 0x00000000, DPL = 0
+  0x00cf92000000ffff,      // 4 GB data segment, base = 0x00000000, DPL = 0
 };
 
 GDTDescriptor gdt_descriptor = {
