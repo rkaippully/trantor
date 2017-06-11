@@ -8,6 +8,7 @@
 #include "printf.h"
 #include "asm.h"
 #include "pmm.h"
+#include "syscap.h"
 
 // Defined in the linker script
 extern uint8_t kernel_start, kernel_end;
@@ -263,16 +264,30 @@ static void init_paging()
     halt();
   }
 
+  // Enable global pages
+  if (syscap.pge) {
+    uint32_t tmp = 0;
+    __asm__ volatile(
+      "movl  %%cr4, %0  ;"
+      "btsl  $7, %0     ;"
+      "movl  %0, %%cr4  ;"
+      : "+r"(tmp));
+  }
+
   uint32_t* pd_ptr = (uint32_t*)physical_to_linear(page_dir_addr);
   uint32_t* pt_ptr = (uint32_t*)physical_to_linear(page_tbl_addr);
 
+  // Clear out the entire page directory
+  for (int i = 0; i < 1024; i++)
+    pd_ptr[i] = 0;
+
   // Lower physical memory of 1 MB + kernel is mapped to 0x00000000 and 0xc0000000
-  pd_ptr[0] = pd_ptr[0x300] = page_tbl_addr | 3;
+  pd_ptr[0] = pd_ptr[0x300] = page_tbl_addr | 0x103;
   for (int i = 0; i < 256 + kernel_page_count; i++)
-    pt_ptr[i] = (i * PAGE_SIZE) | 3;
+    pt_ptr[i] = (i * PAGE_SIZE) | 0x103;
 
   // Create a self mapping for the PD
-  pd_ptr[0x3ff] = page_dir_addr | 3;
+  pd_ptr[0x3ff] = page_dir_addr | 0x103;
 
   // Turn on paging
   uint32_t tmp1;
