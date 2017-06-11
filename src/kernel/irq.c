@@ -32,7 +32,7 @@ void high_irq_handler()
   outb(0x20, 0x20);
 }
 
-void set_interrupt_gate(uint8_t index, void* func, int is_user)
+void set_interrupt_gate(uint8_t index, void* func, bool is_user)
 {
   uint32_t f = (uint32_t)func;
   idt[index*2] = (f & 0xffff) | (KERNEL_CS << 16);

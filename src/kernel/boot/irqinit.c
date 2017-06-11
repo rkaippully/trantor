@@ -65,29 +65,29 @@ static void lidt(void* base, uint16_t limit)
 static void init_interrupt_handlers()
 {
   for (int i = 0; i < 256; i++) {
-    set_interrupt_gate(i, reserved_isr, 0);
+    set_interrupt_gate(i, reserved_isr, false);
     isr_funcs[i] = nop_intr_handler;
   }
 
   /* Set up IDT entries */
-  set_interrupt_gate(0, divide_error_isr, 0);
-  set_interrupt_gate(1, debug_isr, 0);
-  set_interrupt_gate(2, nmi_isr, 0);
-  set_interrupt_gate(3, breakpoint_isr, 0);
-  set_interrupt_gate(4, overflow_isr, 0);
-  set_interrupt_gate(5, bound_range_isr, 0);
-  set_interrupt_gate(6, invalid_opcode_isr, 0);
-  set_interrupt_gate(7, no_coprocessor_isr, 0);
-  set_interrupt_gate(8, double_fault_isr, 0);
-  set_interrupt_gate(10, invalid_tss_isr, 0);
-  set_interrupt_gate(11, segment_not_present_isr, 0);
-  set_interrupt_gate(12, stack_fault_isr, 0);
-  set_interrupt_gate(13, general_protection_isr, 0);
-  set_interrupt_gate(14, page_fault_isr, 0);
-  set_interrupt_gate(16, math_fault_isr, 0);
-  set_interrupt_gate(17, align_check_isr, 0);
-  set_interrupt_gate(18, machine_check_isr, 0);
-  set_interrupt_gate(19, simd_fault_isr, 0);
+  set_interrupt_gate(0, divide_error_isr, false);
+  set_interrupt_gate(1, debug_isr, false);
+  set_interrupt_gate(2, nmi_isr, false);
+  set_interrupt_gate(3, breakpoint_isr, false);
+  set_interrupt_gate(4, overflow_isr, false);
+  set_interrupt_gate(5, bound_range_isr, false);
+  set_interrupt_gate(6, invalid_opcode_isr, false);
+  set_interrupt_gate(7, no_coprocessor_isr, false);
+  set_interrupt_gate(8, double_fault_isr, false);
+  set_interrupt_gate(10, invalid_tss_isr, false);
+  set_interrupt_gate(11, segment_not_present_isr, false);
+  set_interrupt_gate(12, stack_fault_isr, false);
+  set_interrupt_gate(13, general_protection_isr, false);
+  set_interrupt_gate(14, page_fault_isr, false);
+  set_interrupt_gate(16, math_fault_isr, false);
+  set_interrupt_gate(17, align_check_isr, false);
+  set_interrupt_gate(18, machine_check_isr, false);
+  set_interrupt_gate(19, simd_fault_isr, false);
 
   /* Set IRQ handlers */
   for (int i = 0x78; i < 0x80; i++)

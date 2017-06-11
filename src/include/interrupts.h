@@ -37,7 +37,7 @@ extern void high_irq_handler();
 /* A table of interrupt handlers */
 extern void (*isr_funcs[256])(void);
 
-extern void set_interrupt_gate(uint8_t index, void* func, int is_user);
+extern void set_interrupt_gate(uint8_t index, void* func, bool is_user);
 
 /* The IDT */
 extern uint32_t idt[256 * 2];

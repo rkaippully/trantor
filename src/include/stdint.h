@@ -20,4 +20,9 @@ typedef signed long long int int64_t;
 #define max(a, b) ({ __typeof__ (a) _a = (a);  __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #define min(a, b) ({ __typeof__ (a) _a = (a);  __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
+typedef enum {
+  false = 0,
+  true = 1
+} __attribute__((packed)) bool;
+
 #endif
