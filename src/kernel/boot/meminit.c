@@ -277,9 +277,11 @@ static void init_paging()
   uint32_t* pd_ptr = (uint32_t*)physical_to_linear(page_dir_addr);
   uint32_t* pt_ptr = (uint32_t*)physical_to_linear(page_tbl_addr);
 
-  // Clear out the entire page directory
-  for (int i = 0; i < 1024; i++)
+  // Clear out the entire page directory and table
+  for (int i = 0; i < 1024; i++) {
     pd_ptr[i] = 0;
+    pt_ptr[i] = 0;
+  }
 
   // Lower physical memory of 1 MB + kernel is mapped to 0x00000000 and 0xc0000000
   pd_ptr[0] = pd_ptr[0x300] = page_tbl_addr | 0x103;
