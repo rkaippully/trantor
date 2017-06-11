@@ -248,21 +248,16 @@ static void init_paging()
   uint32_t kernel_page_count = (kernel_size + PAGE_SIZE - 1)/PAGE_SIZE + bitmap_pages;
 
   // Kernel is loaded at 1 MB and should not exceed 4 MB
-  if (kernel_page_count > 768) {
-    kdebug("Kernel is too large, needs %d pages.\n");
-    halt();
-  }
+  if (kernel_page_count > 768)
+    kpanic("Kernel is too large, needs %d pages.\n");
 
   uint32_t page_dir_addr = pmm_alloc();
-  if (page_dir_addr == 0) {
-    kdebug("Could not allocate a physical page for page directory.\n");
-    halt();
-  }
+  if (page_dir_addr == 0)
+    kpanic("Could not allocate a physical page for page directory.\n");
+
   uint32_t page_tbl_addr = pmm_alloc();
-  if (page_tbl_addr == 0) {
-    kdebug("Could not allocate a physical page for page table.\n");
-    halt();
-  }
+  if (page_tbl_addr == 0)
+    kpanic("Could not allocate a physical page for page table.\n");
 
   // Enable global pages
   if (syscap.pge) {

@@ -20,7 +20,7 @@
 
 #include "stdint.h"
 
-static const uint32_t PAGE_SIZE = 4096;
+#define PAGE_SIZE 4096
 
 extern uint32_t pmm_bitmap;
 

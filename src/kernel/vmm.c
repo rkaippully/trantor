@@ -24,6 +24,20 @@ static inline void invlpg(uint32_t addr)
   __asm__ volatile("invlpg (%0)" : : "g"(addr));
 }
 
+static inline void zero_page(uint32_t addr)
+{
+  /* zero the page */
+  __asm__ volatile(
+    "movl  $1024, %%ecx    ;"
+    "xorl  %%eax, %%eax    ;"
+    "movl  %0, %%edi       ;"
+    "cld                   ;"
+    "rep stosl             ;"
+    :
+    : "g"(addr)
+    : "eax", "ecx", "edi");
+}
+
 bool vmm_alloc(uint32_t addr)
 {
   int d_idx = addr >> 22;
@@ -50,6 +64,7 @@ bool vmm_alloc(uint32_t addr)
     // TODO: Handle pmm allocation failure
     page_tbls[t_idx] = addr | is_kernel(addr) ? 0x103 : 0x107;
     invlpg(t_idx << 12);
+    zero_page(addr);
     return true;
   }
 }

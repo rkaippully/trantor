@@ -12,6 +12,8 @@
 
 #include "stdint.h"
 
+#define PAGE_SIZE 4096
+
 /*
   Allocate a virtual page at the specified address. Returns the allocation
   status.
