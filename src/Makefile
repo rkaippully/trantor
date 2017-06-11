@@ -48,7 +48,7 @@ PRELUDE_IMG := boot/prelude.img
 
 # Kernel is composed of these object files
 KOBJECTS := kernel/boot/main.o kernel/boot/console.o kernel/boot/cpuinit.o kernel/boot/meminit.o \
-	kernel/boot/irqinit.o kernel/kprintf.o kernel/syscap.o kernel/pmm.o kernel/irq.o
+	kernel/boot/irqinit.o kernel/kprintf.o kernel/syscap.o kernel/pmm.o kernel/vmm.o kernel/irq.o
 
 boot/%.img: boot/%.o
 	$(LD) $(LDFLAGS) -T trantor-boot.ld -o $@ $^
