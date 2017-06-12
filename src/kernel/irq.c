@@ -13,6 +13,7 @@ uint16_t idt_descr[4] __attribute__((aligned(4)));
 
 /* A table of interrupt handlers */
 void (*isr_funcs[256])(void);
+void (*irq_funcs[16])(void);
 
 /*
   An interrupt handler that does nothing.
@@ -63,8 +64,7 @@ __asm__(
   "popl  %gs                    ;"
   "popal                        ;"
   "addl  $8, %esp               ;" // Pop error code and int vector
-  "iret                         ;"
-);
+  "iret                         ;");
 
 #define ISR_WITH_ERROR_CODE(int_vec, name)     \
   __asm__(                                     \
@@ -83,7 +83,40 @@ __asm__(
     "jmp    isr_handler         ;"             \
   );
 
-ISR_WITHOUT_ERROR_CODE(0xff, reserved_isr);
+__asm__(
+  ".global irq_handler          ;"
+  "irq_handler:                 ;"
+  "pushal                       ;"
+  "pushl  %gs                   ;"
+  "pushl  %fs                   ;"
+  "pushl  %ds                   ;"
+  "pushl  %es                   ;"
+  "pushl  %ebp                  ;"
+  "movl   %esp, %ebp            ;"
+  "movw   $0x0010, %ax          ;"
+  "movw   %ax, %ds              ;"
+  "movw   %ax, %es              ;"
+  "movw   %ax, %fs              ;"
+  "movw   %ax, %gs              ;"
+  "movl   52(%esp), %eax        ;" // IRQ number
+  "call   *_irq_funcs(,%eax,4)  ;"
+  "leave                        ;"
+  "popl  %es                    ;"
+  "popl  %ds                    ;"
+  "popl  %fs                    ;"
+  "popl  %gs                    ;"
+  "popal                        ;"
+  "addl  $4, %esp               ;" // Pop IRQ number
+  "iret                         ;");
+
+#define IRQ_ISR(irq_num)                       \
+  __asm__(                                     \
+    ".global _irq_" #irq_num "_isr ;"          \
+    "_irq_" #irq_num "_isr:        ;"          \
+    "pushl  $" #irq_num "                ;"    \
+    "jmp    irq_handler                 ;");
+
+ISR_WITHOUT_ERROR_CODE(0xff, general_isr);
 ISR_WITHOUT_ERROR_CODE(0x00, divide_error_isr);
 ISR_WITHOUT_ERROR_CODE(0x01, debug_isr);
 ISR_WITHOUT_ERROR_CODE(0x02, nmi_isr);
@@ -102,3 +135,21 @@ ISR_WITHOUT_ERROR_CODE(0x10, math_fault_isr);
 ISR_WITH_ERROR_CODE(0x11, align_check_isr);
 ISR_WITHOUT_ERROR_CODE(0x12, machine_check_isr);
 ISR_WITHOUT_ERROR_CODE(0x13, simd_fault_isr);
+
+// ISRs for IRQs
+IRQ_ISR(0);
+IRQ_ISR(1);
+IRQ_ISR(2);
+IRQ_ISR(3);
+IRQ_ISR(4);
+IRQ_ISR(5);
+IRQ_ISR(6);
+IRQ_ISR(7);
+IRQ_ISR(8);
+IRQ_ISR(9);
+IRQ_ISR(10);
+IRQ_ISR(11);
+IRQ_ISR(12);
+IRQ_ISR(13);
+IRQ_ISR(14);
+IRQ_ISR(15);

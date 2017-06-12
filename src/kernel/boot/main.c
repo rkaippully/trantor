@@ -14,13 +14,15 @@ void kmain()
 {
   kdebug("Booting Trantor OS...\n");
 
-  extern void init_console(), init_cpu(), init_memory(), init_interrupts();
+  extern void init_console(), init_cpu(), init_memory(),
+    init_interrupts(), init_pit();
 
   init_console();
 
   init_cpu();
   init_memory();
   init_interrupts();
+  init_pit();
 
   halt();
 }

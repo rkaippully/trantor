@@ -10,7 +10,7 @@
 #include "stdint.h"
 
 /* Well known IRQs */
-extern void reserved_isr(void);
+extern void general_isr(void);
 extern void divide_error_isr(void);
 extern void debug_isr(void);
 extern void nmi_isr(void);
@@ -36,11 +36,29 @@ extern void high_irq_handler();
 
 /* A table of interrupt handlers */
 extern void (*isr_funcs[256])(void);
+extern void (*irq_funcs[16])(void);
 
 extern void set_interrupt_gate(uint8_t index, void* func, bool is_user);
 
 /* The IDT */
 extern uint32_t idt[256 * 2];
 extern uint16_t idt_descr[4];
+
+extern void irq_0_isr(void);
+extern void irq_1_isr(void);
+extern void irq_2_isr(void);
+extern void irq_3_isr(void);
+extern void irq_4_isr(void);
+extern void irq_5_isr(void);
+extern void irq_6_isr(void);
+extern void irq_7_isr(void);
+extern void irq_8_isr(void);
+extern void irq_9_isr(void);
+extern void irq_10_isr(void);
+extern void irq_11_isr(void);
+extern void irq_12_isr(void);
+extern void irq_13_isr(void);
+extern void irq_14_isr(void);
+extern void irq_15_isr(void);
 
 #endif

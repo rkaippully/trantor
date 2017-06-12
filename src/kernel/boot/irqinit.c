@@ -65,7 +65,7 @@ static void lidt(void* base, uint16_t limit)
 static void init_interrupt_handlers()
 {
   for (int i = 0; i < 256; i++) {
-    set_interrupt_gate(i, reserved_isr, false);
+    set_interrupt_gate(i, general_isr, false);
     isr_funcs[i] = nop_intr_handler;
   }
 
@@ -91,9 +91,26 @@ static void init_interrupt_handlers()
 
   /* Set IRQ handlers */
   for (int i = 0x78; i < 0x80; i++)
-    isr_funcs[i] = low_irq_handler;
+    irq_funcs[i - 0x70] = low_irq_handler;
   for (int i = 0x70; i < 0x78; i++)
-    isr_funcs[i] = high_irq_handler;
+    irq_funcs[i - 0x70] = high_irq_handler;
+
+  set_interrupt_gate(0x70, irq_0_isr, false);
+  set_interrupt_gate(0x71, irq_1_isr, false);
+  set_interrupt_gate(0x72, irq_2_isr, false);
+  set_interrupt_gate(0x73, irq_3_isr, false);
+  set_interrupt_gate(0x74, irq_4_isr, false);
+  set_interrupt_gate(0x75, irq_5_isr, false);
+  set_interrupt_gate(0x76, irq_6_isr, false);
+  set_interrupt_gate(0x77, irq_7_isr, false);
+  set_interrupt_gate(0x78, irq_8_isr, false);
+  set_interrupt_gate(0x79, irq_9_isr, false);
+  set_interrupt_gate(0x7a, irq_10_isr, false);
+  set_interrupt_gate(0x7b, irq_11_isr, false);
+  set_interrupt_gate(0x7c, irq_12_isr, false);
+  set_interrupt_gate(0x7d, irq_13_isr, false);
+  set_interrupt_gate(0x7e, irq_14_isr, false);
+  set_interrupt_gate(0x7f, irq_15_isr, false);
 
   lidt(idt, 256*8 - 1);
 }
