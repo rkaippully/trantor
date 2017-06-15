@@ -10,6 +10,7 @@
 
 void timer_tick()
 {
-  kdebug("timer tick\n");
+  /*static uint32_t count = 0;
+    cprintf("timer tick %d\r", count++);*/
   outb(0x20, 0x20);
 }

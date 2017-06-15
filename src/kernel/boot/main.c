@@ -7,6 +7,7 @@
 #include "stdint.h"
 #include "printf.h"
 #include "asm.h"
+#include "drivers.h"
 
 uint8_t kernel_stack[4096];
 
@@ -15,7 +16,7 @@ void kmain()
   kdebug("Booting Trantor OS...\n");
 
   extern void init_console(), init_cpu(), init_memory(),
-    init_interrupts(), init_pit();
+    init_interrupts(), init_pit(), init_drivers();
 
   init_console();
 
@@ -23,6 +24,7 @@ void kmain()
   init_memory();
   init_interrupts();
   init_pit();
+  init_drivers();
 
   halt();
 }
