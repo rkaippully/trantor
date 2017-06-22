@@ -31,8 +31,6 @@ extern void machine_check_isr(void);
 extern void simd_fault_isr(void);
 
 extern void nop_intr_handler();
-extern void low_irq_handler();
-extern void high_irq_handler();
 
 /* A table of interrupt handlers */
 extern void (*isr_funcs[256])(void);

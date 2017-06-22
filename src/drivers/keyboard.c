@@ -31,7 +31,6 @@ static void keyboard_irq()
     kdebug("%02x ", b);
   } while (inb(STATUS_PORT) & 1);
   kdebug("\n");
-  outb(0x20, 0x20);
 }
 
 static void init_failed()

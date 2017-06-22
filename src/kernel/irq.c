@@ -22,17 +22,6 @@ void nop_intr_handler()
 {
 }
 
-void low_irq_handler()
-{
-  outb(0x20, 0x20);
-}
-
-void high_irq_handler()
-{
-  outb(0xa0, 0x20);
-  outb(0x20, 0x20);
-}
-
 void set_interrupt_gate(uint8_t index, void* func, bool is_user)
 {
   uint32_t f = (uint32_t)func;
@@ -100,6 +89,12 @@ __asm__(
   "movw   %ax, %gs              ;"
   "movl   52(%esp), %eax        ;" // IRQ number
   "call   *_irq_funcs(,%eax,4)  ;"
+  "movb   $0x20, %al            ;"
+  "cmpl   $0x78, 52(%esp)       ;"
+  "jge    1f                    ;"
+  "outb   %al, $0xa0            ;"
+  "1:                           ;"
+  "outb   %al, $0x20            ;"
   "leave                        ;"
   "popl  %es                    ;"
   "popl  %ds                    ;"

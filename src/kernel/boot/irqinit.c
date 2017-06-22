@@ -90,10 +90,8 @@ static void init_interrupt_handlers()
   set_interrupt_gate(19, simd_fault_isr, false);
 
   /* Set IRQ handlers */
-  for (int i = 0x78; i < 0x80; i++)
-    irq_funcs[i - 0x70] = low_irq_handler;
-  for (int i = 0x70; i < 0x78; i++)
-    irq_funcs[i - 0x70] = high_irq_handler;
+  for (int i = 0; i < 16; i++)
+    irq_funcs[i] = nop_intr_handler;
 
   set_interrupt_gate(0x70, irq_0_isr, false);
   set_interrupt_gate(0x71, irq_1_isr, false);
