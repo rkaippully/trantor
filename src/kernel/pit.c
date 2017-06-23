@@ -7,10 +7,11 @@
 #include "asm.h"
 #include "interrupts.h"
 #include "printf.h"
+#include "process.h"
 
 void timer_tick()
 {
-  /*static uint32_t count = 0;
-    cprintf("timer tick %d\r", count++);*/
+  proc_schedule();
+
   outb(0x20, 0x20);
 }

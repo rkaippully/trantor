@@ -52,29 +52,6 @@ static inline void io_wait()
   __asm__ volatile("outb %%al, $0x80" : : "a"(0));
 }
 
-/* mutex operations */
-typedef uint32_t mutex_t;
-
-static inline void acquire_mutex(mutex_t* m)
-{
-  __asm__ volatile(
-     "lock   btsl $0, %0     ;"
-     "jnc    2f              ;"
-     "1:                      "
-     "pause                  ;"
-     "testl  $1, %0          ;"
-     "je     1b              ;"
-     "lock   btsl $0, %0     ;"
-     "jc     1b              ;"
-     "2:                      "
-     : "+m"(*m));
-}
-
-static inline void release_mutex(mutex_t* m)
-{
-  __asm__ volatile("movl  $0, %0" : "=m"(*m));
-}
-
 static inline uint32_t bsf(uint32_t v)
 {
   return __builtin_ffs(v);

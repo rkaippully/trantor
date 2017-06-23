@@ -9,6 +9,7 @@
 #include "asm.h"
 #include "vmm.h"
 #include "printf.h"
+#include "process.h"
 
 /*
   Kernel heap is located at 0xc0c00000-0xc0ffffff. It can't exceed 4MB.
@@ -90,7 +91,7 @@ static bin_entry* get_bin_entry()
 #define NUM_BINS 9
 static bin_entry* bins[NUM_BINS];
 
-static mutex_t km_mutex;
+static mutex_t km_mutex = INIT_MUTEX;
 
 void* kmalloc(uint32_t size)
 {
