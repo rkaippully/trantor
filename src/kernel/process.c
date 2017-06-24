@@ -12,6 +12,9 @@ volatile process_t* current_proc = 0;
 
 process_t* ready_procs = 0;
 
+/* We use software task switching but still need one TSS. */
+tss_t tss;
+
 void proc_mark_ready(process_t* p)
 {
   if (p->state == READY)

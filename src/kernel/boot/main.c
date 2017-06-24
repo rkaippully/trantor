@@ -9,8 +9,6 @@
 #include "asm.h"
 #include "drivers.h"
 
-uint8_t kernel_stack[4096];
-
 void kmain()
 {
   kdebug("Booting Trantor OS...\n");

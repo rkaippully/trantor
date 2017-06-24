@@ -309,7 +309,7 @@ static void init_paging()
     "movw   %0, %%gs    ;"
     "movw   %0, %%ss    ;"
     : "=r"(tmp2)
-    : "m"(gdt_descriptor), "i"(KERNEL_CS), "i"(KERNEL_DS));
+    : "m"(gdtr), "i"(KERNEL_CS), "i"(KERNEL_DS));
 
   // Remove the identity mapping and reload cr3
   pd_ptr[0] = 0;

@@ -38,14 +38,18 @@ extern uint32_t pmm_alloc();
 */
 extern void pmm_free(uint32_t addr);
 
-typedef uint64_t __attribute__((aligned(8))) GDTEntry;
+typedef uint64_t descriptor_t;
 
 typedef struct {
   uint16_t limit;
-  GDTEntry* base;
-} __attribute__((packed)) GDTDescriptor;
+  descriptor_t* base;
+} __attribute__((packed)) tablereg_t;
 
-extern GDTDescriptor gdt_descriptor;
-extern GDTEntry gdt[];
+extern tablereg_t gdtr;
+extern descriptor_t gdt[];
+
+extern uint8_t kernel_stack[PAGE_SIZE];
+
+#define KERNEL_STACK_END (kernel_stack + PAGE_SIZE)
 
 #endif

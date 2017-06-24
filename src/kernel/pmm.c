@@ -13,6 +13,22 @@ uint32_t bitmap_size;
 // Index at which we start searching for free mem
 static uint32_t bitmap_idx = 0;
 
+descriptor_t gdt[6] __attribute__((aligned(8))) = {
+  0x0000000000000000,
+  0x00cf9a000000ffff,      // 4 GB code segment, base = 0x00000000, DPL = 0
+  0x00cf92000000ffff,      // 4 GB data segment, base = 0x00000000, DPL = 0
+  0x00cffa000000ffff,      // 4 GB code segment, base = 0x00000000, DPL = 3
+  0x00cff2000000ffff,      // 4 GB data segment, base = 0x00000000, DPL = 3
+  0x0000000000000000       // TSS descriptor
+};
+
+tablereg_t gdtr = {
+  .limit = 6*8-1,
+  .base = gdt
+};
+
+uint8_t kernel_stack[PAGE_SIZE];
+
 uint32_t pmm_alloc()
 {
   /* Scan for the lowest set bit */
@@ -45,14 +61,3 @@ void pmm_free(uint32_t addr)
   uint32_t* ptr = &pmm_bitmap;
   ptr[idx] |= 1 << pos;
 }
-
-GDTEntry gdt[3] = {
-  0x0000000000000000,
-  0x00cf9a000000ffff,      // 4 GB code segment, base = 0x00000000, DPL = 0
-  0x00cf92000000ffff,      // 4 GB data segment, base = 0x00000000, DPL = 0
-};
-
-GDTDescriptor gdt_descriptor = {
-  .limit = 3*8-1,
-  .base = gdt
-};
