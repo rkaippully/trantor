@@ -12,8 +12,8 @@
 typedef struct {
   void (*init)();
   void (*shutdown)();
-} Driver;
+} driver_t;
 
-extern Driver* drivers[];
+extern driver_t* drivers[];
 
 #endif

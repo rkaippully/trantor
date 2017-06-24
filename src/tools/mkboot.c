@@ -83,7 +83,7 @@ struct bpb {
 
 typedef enum {
   FAT12, FAT16, FAT32
-} FATType;
+} fattype_t;
 
 struct dir_entry {
   uint8_t  filename[11];
@@ -201,7 +201,7 @@ static struct dir_entry* find_kernel_dir_entry(FILE* disk_img, struct bpb* bpb)
   return entry;
 }
 
-static FATType get_fat_type(struct bpb* bpb)
+static fattype_t get_fat_type(struct bpb* bpb)
 {
   uint32_t root_dir_secs = ceil(bpb->root_entries * 32, bpb->bytes_per_sec);
   uint32_t secs_per_fat = bpb->secs_per_fat_16 ? bpb->secs_per_fat_16 : bpb->secs_per_fat_32;
@@ -216,7 +216,7 @@ static FATType get_fat_type(struct bpb* bpb)
     return FAT32;
 }
 
-static void* find_tbh_entry(void* boot_sec, FATType type)
+static void* find_tbh_entry(void* boot_sec, fattype_t type)
 {
   uint16_t version_and_format = type == FAT12 ? 0x0000 : 0x0100;
   uint16_t *ptr = boot_sec+0x40, *end = boot_sec+0x200;
@@ -231,7 +231,7 @@ static void* find_tbh_entry(void* boot_sec, FATType type)
   exit(1);
 }
 
-static int is_end_of_chain(uint32_t idx, FATType type)
+static int is_end_of_chain(uint32_t idx, fattype_t type)
 {
   switch(type) {
   case FAT12:
@@ -246,7 +246,7 @@ static int is_end_of_chain(uint32_t idx, FATType type)
   }
 }
 
-static uint32_t get_fat_entry(void* fat, FATType type, uint32_t idx)
+static uint32_t get_fat_entry(void* fat, fattype_t type, uint32_t idx)
 {
   uint32_t* lv;
   uint16_t* sv;
@@ -269,7 +269,7 @@ static uint32_t get_fat_entry(void* fat, FATType type, uint32_t idx)
   }
 }
 
-static struct tbh_lba_entry* next_lba_run(struct bpb* bpb, void* fat, FATType type, uint32_t idx)
+static struct tbh_lba_entry* next_lba_run(struct bpb* bpb, void* fat, fattype_t type, uint32_t idx)
 {
   static uint32_t lba_run_idx = 0;
   static struct tbh_lba_entry entry;
@@ -336,7 +336,7 @@ static struct tbh_chs_entry* next_chs_run(struct bpb* bpb, struct tbh_lba_entry*
 }
 
 static void update_tbh_chs(void* boot_sec, struct bpb* bpb,
-                           void* fat, FATType type, struct dir_entry* entry)
+                           void* fat, fattype_t type, struct dir_entry* entry)
 {
   struct tbh_chs_entry* ptr = find_tbh_entry(boot_sec, type);
   uint32_t idx = ((uint32_t)entry->first_cluster_high << 16) | entry->first_cluster_low;
@@ -353,7 +353,7 @@ static void update_tbh_chs(void* boot_sec, struct bpb* bpb,
 }
 
 static void update_tbh_lba(void* boot_sec, struct bpb* bpb,
-                           void* fat, FATType type, struct dir_entry* entry)
+                           void* fat, fattype_t type, struct dir_entry* entry)
 {
   struct tbh_lba_entry* ptr = find_tbh_entry(boot_sec, type);
   uint32_t idx = ((uint32_t)entry->first_cluster_high << 16) | entry->first_cluster_low;
@@ -365,8 +365,8 @@ static void update_tbh_lba(void* boot_sec, struct bpb* bpb,
   ptr->count = 0;
 }
 
-static void* update_bpb_and_tbh(FILE* img_file, struct bpb* bpb, void* fat, FATType type, struct dir_entry* entry,
-                                void (*update)(void*, struct bpb*, void*, FATType, struct dir_entry*))
+static void* update_bpb_and_tbh(FILE* img_file, struct bpb* bpb, void* fat, fattype_t type, struct dir_entry* entry,
+                                void (*update)(void*, struct bpb*, void*, fattype_t, struct dir_entry*))
 {
   uint8_t* new_boot_sec = malloc(512);
   if (fread(new_boot_sec, 1, 512, img_file) != 512) {
@@ -389,7 +389,7 @@ static void update_boot_sector(FILE* disk_img, FILE* chs_img, FILE* lba_img,
                                void* boot_sec, struct bpb* bpb,
                                void* fat, struct dir_entry* entry)
 {
-  FATType type = get_fat_type(bpb);
+  fattype_t type = get_fat_type(bpb);
   void* new_boot_sec;
   switch(type) {
   case FAT12:

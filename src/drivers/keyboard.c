@@ -69,7 +69,7 @@ static void keyboard_init()
   kdebug("Keyboard initialized.\n");
 }
 
-Driver keyboard_driver = {
+driver_t keyboard_driver = {
   .init = keyboard_init,
   .shutdown = 0
 };

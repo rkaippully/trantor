@@ -9,4 +9,4 @@
 #include "stdint.h"
 #include "syscap.h"
 
-SysCap syscap;
+syscap_t syscap;

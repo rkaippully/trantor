@@ -17,8 +17,8 @@ typedef struct {
   bool pge;
   bool mmx;
   bool fxsave;
-} SysCap;
+} syscap_t;
 
-extern SysCap syscap;
+extern syscap_t syscap;
 
 #endif
