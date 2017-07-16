@@ -30,7 +30,9 @@ forever:
   hlt
   jmp  forever
 
+
+
   .bss
-  .align 4
+  .balign 0x1000
 user_stack:
 	.fill USER_STACK_SIZE, 1, 0

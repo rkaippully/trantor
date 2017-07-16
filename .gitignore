@@ -1,9 +1,7 @@
 src/**/*.o
 src/**/*.img
-src/trantor
-src/trantor.map
-src/trantor.sys
-src/trantor.fd
-src/trantor.hd
-src/tools/mkboot
+src/**/*.a
+src/**/*.map
+src/kinit/kinit
+src/mm/mm
 misc/

@@ -24,6 +24,7 @@ OBJECTS   := entry.o multiboot.o main.o initrd.o memory.o util.o ../lib/libtrant
 all: $(IMAGE)
 
 $(IMAGE): $(OBJECTS) $(foreach obj, $(KOBJECTS), ../kernel/$(obj))
+	@echo Linking $@
 	@$(LD) $(LDFLAGS) -T ../ldscripts/kinit.ld -Map=$(IMAGE_MAP) -o $@ $^
 
 clean:

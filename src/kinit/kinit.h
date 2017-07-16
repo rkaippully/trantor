@@ -25,7 +25,12 @@ typedef enum {
   INITRD_FORMAT_ERROR,
 } return_t;
 
+typedef struct initrd_file_t initrd_file_t;
+
 extern return_t load_initrd(multiboot_info_t* boot_info);
+extern const initrd_file_t* get_initrd_files();
+extern const initrd_file_t* next_initrd_file(const initrd_file_t* f);
+
 extern return_t init_memory();
 
 #endif

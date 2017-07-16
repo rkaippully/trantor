@@ -26,3 +26,15 @@ int memcmp(const void* s1, const void* s2, size_t n)
 
   return 0;
 }
+
+void* memchr(const void *s, int c, size_t n)
+{
+  const unsigned char* s1 = s;
+  unsigned char c1 = c;
+  while (n-- > 0) {
+    if (*s1 == c1)
+      return (void*)s1;
+    s1++;
+  }
+  return 0;
+}

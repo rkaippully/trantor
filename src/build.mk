@@ -27,3 +27,11 @@ LDFLAGS := -nostartfiles -nodefaultlibs -nostdlib -static -L$(LIBDIR) -lgcc -s
 ARFLAGS := r
 
 KOBJECTS := process.o memory.o
+
+%.o: %.c
+	@echo Compiling $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
+
+%.o: %.S
+	@echo Assembling $^
+	@$(AS) $(ASFLAGS) -c -o $@ $^

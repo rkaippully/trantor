@@ -24,6 +24,7 @@ OBJECTS   := ../lib/libtrantor.a entry.o main.o
 all: $(IMAGE)
 
 $(IMAGE): $(OBJECTS)
+	@echo Linking $@
 	@$(LD) $(LDFLAGS) -T ../ldscripts/bootmodule.ld -Map=$(IMAGE_MAP) -o $@ $^
 
 clean:

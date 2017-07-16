@@ -15,7 +15,7 @@
 
   .section ".data.mmap"
 
-  .align 4
+  .balign 4
 	.global mmap_info
 mmap_info:
   /* Space for 16 mmap entries */
