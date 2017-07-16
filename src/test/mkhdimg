@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Trantor Operating System
+#
+# Copyright (C) 2017 Raghu Kaippully
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# This Source Code Form is "Incompatible With Secondary Licenses", as
+# defined by the Mozilla Public License, v. 2.0.
+#
+
+TESTDIR=$(dirname "$0")
+
+IMAGE_SIZE=100
+IMAGE_FILE=$1
+
+rm -f ${IMAGE_FILE}
+dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${IMAGE_SIZE}
+dd conv=notrunc if=${TESTDIR}/grub/stage1 of=${IMAGE_FILE}
+dd conv=notrunc if=${TESTDIR}/grub/stage2 of=${IMAGE_FILE} bs=512 seek=1
+
+fdisk ${IMAGE_FILE} <<EOF
+d
+1
+d
+2
+d
+3
+d
+n
+p
+1
+2048
+
+t
+e
+a
+p
+w
+EOF
+
+device=`sudo losetup --show -f -o 1048576 ${IMAGE_FILE}`
+sudo mkfs.fat -v ${device}
+
+MOUNTDIR=${TESTDIR}/tmp
+rm -f ${MOUNTDIR}
+mkdir ${MOUNTDIR}
+sudo mount -t msdos ${device} ${MOUNTDIR}
+sudo mkdir ${MOUNTDIR}/boot
+sudo cp -r ${TESTDIR}/grub ${MOUNTDIR}/boot
+sudo cp ${TESTDIR}/../kinit/kinit ${MOUNTDIR}/boot
+sudo ar rcS ${MOUNTDIR}/boot/initrd ${TESTDIR}/../mm/mm
+sudo umount ${device}
+sudo losetup -d ${device}
+sudo rm -r ${MOUNTDIR}
