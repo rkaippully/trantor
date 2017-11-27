@@ -2,6 +2,5 @@ src/**/*.o
 src/**/*.img
 src/**/*.a
 src/**/*.map
-src/kinit/kinit
-src/mm/mm
+src/kernel.sys
 misc/

@@ -11,10 +11,7 @@
   defined by the Mozilla Public License, v. 2.0.
 */
 
-int i = 9;
-static int x = 0;
+#![crate_type = "staticlib"]
 
-void test()
-{
-  x = 10;
-}
+pub mod util;
+pub mod main;

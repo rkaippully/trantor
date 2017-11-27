@@ -4,6 +4,5 @@ hiddenmenu
 
 title Trantor
 root (hd0,0)
-kernel --type=multiboot /boot/kinit
-module /boot/initrd
+kernel --type=multiboot /trantor/kernel.sys
 boot

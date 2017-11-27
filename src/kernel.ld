@@ -12,19 +12,23 @@
 */
 
 /*
-  Trantor kinit linker script
-
-  The kinit image has two (kinit and kernel) parts.
+  Trantor kernel linker script
 */
 
 OUTPUT_FORMAT("elf32-i386")
-ENTRY(_start)
+ENTRY(main)
 
 SECTIONS
 {
-  .text 0x00100000 :
+  /* The kernel is loaded at linear address 0xf0000000 and physical address 0x00100000 */
+  .text.multiboot 0xf0000000 : AT(0x00100000)
   {
-    *(.text.startup)
+    _kernel_start = .;
+    *(.multiboot)
+  }
+
+  .text :
+  {
     *(.text)
     *(.text.*)
   }
@@ -37,20 +41,16 @@ SECTIONS
     *(.rodata.*)
   }
 
-  .data.mmap :
-  {
-    *(.data.mmap)
-  }
-
   .bss :
   {
     *(.bss)
     *(COMMON)
 
     . = ALIGN(4096);
+    _kernel_end = .;
   }
 
-  /* Stuff we don't want */
+  /* Stuff we don't want in the kernel */
   /DISCARD/ :
   {
     *(.eh_frame)

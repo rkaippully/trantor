@@ -15,15 +15,43 @@
 # Makefile for Trantor OS
 #
 
+GCC_PREFIX := i486-pc-elf
+
+AS        := $(GCC_PREFIX)-gcc
+ASFLAGS   := -Wall -c -I./include
+CC        := $(GCC_PREFIX)-gcc
+CFLAGS    := -O3 -Wall -march=i486 -std=c11 -pedantic -ffreestanding -nostdinc -I./include
+LD        := $(GCC_PREFIX)-ld
+LIBDIR    := $(dir $(shell which $(CC)))../lib/gcc/$(GCC_PREFIX)/$(shell $(CC) -dumpversion)
+LDFLAGS   := -nostartfiles -nodefaultlibs -nostdlib -static -L$(LIBDIR) -lgcc -s
+RUSTC     := rustc
+RUSTFLAGS := --target i586-unknown-linux-gnu -C target-cpu=i486 -O
+
+KERNEL     := kernel.sys
+KERNEL_MAP := $(basename $(KERNEL)).map
+OBJECTS    := entry.o data.o lib.o
+
+all: $(KERNEL)
+
+%.o: %.c
+	@echo Compiling $^
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $^
+
+%.o: %.S
+	@echo Assembling $^
+	@$(AS) $(ASFLAGS) -c -o $@ $^
+
+lib.o: *.rs
+	@echo Compiling $@
+	@$(RUSTC) $(RUSTFLAGS) --emit=obj -o $@ $(basename $@).rs
+
+$(KERNEL): $(OBJECTS)
+	@echo Linking $@
+	@$(LD) $(LDFLAGS) -T kernel.ld -Map=$(KERNEL_MAP) -o $@ $^
+
 TEST_IMAGE := test/trantor.img
 
-all:
-	@$(MAKE) --no-print-directory -C lib
-	@$(MAKE) --no-print-directory -C kernel
-	@$(MAKE) --no-print-directory -C kinit
-	@$(MAKE) --no-print-directory -C mm
-
-$(TEST_IMAGE): all
+$(TEST_IMAGE): $(KERNEL)
 	@test/mkhdimg $@
 
 qemu: $(TEST_IMAGE)
@@ -33,10 +61,6 @@ bochs: $(TEST_IMAGE)
 	@bochs -f test/bochsrc.hd
 
 clean:
-	@$(MAKE) --no-print-directory -C lib clean
-	@$(MAKE) --no-print-directory -C kernel clean
-	@$(MAKE) --no-print-directory -C kinit clean
-	@$(MAKE) --no-print-directory -C mm clean
-	@$(RM) $(TEST_IMAGE)
+	@$(RM) $(OBJECTS) $(KERNEL) $(KERNEL_MAP) $(TEST_IMAGE)
 
 .PHONY: all qemu bochs clean

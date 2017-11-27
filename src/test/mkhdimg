@@ -49,10 +49,9 @@ MOUNTDIR=${TESTDIR}/tmp
 rm -f ${MOUNTDIR}
 mkdir ${MOUNTDIR}
 sudo mount -t msdos ${device} ${MOUNTDIR}
-sudo mkdir ${MOUNTDIR}/boot
+sudo mkdir ${MOUNTDIR}/boot ${MOUNTDIR}/trantor
 sudo cp -r ${TESTDIR}/grub ${MOUNTDIR}/boot
-sudo cp ${TESTDIR}/../kinit/kinit ${MOUNTDIR}/boot
-sudo ar rcS ${MOUNTDIR}/boot/initrd ${TESTDIR}/../mm/mm
+sudo cp ${TESTDIR}/../kernel.sys ${MOUNTDIR}/trantor
 sudo umount ${device}
 sudo losetup -d ${device}
 sudo rm -r ${MOUNTDIR}
